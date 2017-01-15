@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Set Page Color Popup</title>
+    <style>
+    body {
+      overflow: hidden;
+      margin: 0px;
+      padding: 10px 20px;
+      background: white;
+      width: 300px;
+    }
+
+    body *{
+        box-sizing: border-box;
+    }
+
+    .header{
+        text-align: center;
+        font-size: 16px;
+        color: rgb(0, 4, 137);
+        margin-bottom: 10px;
+    }
+
+    label, input{
+        width: 50%;
+        display: inline-block;
+        vertical-align: top;
+        margin-bottom: 5px;
+    }
+
+    input[type="button"]{
+        margin: 0 auto;
+        display: block;
+        text-transform: uppercase;
+    }
+    </style>
+    <script src="popup.js"></script>
+  </head>
+  <body>
+    <div class="header">Fill out the info below and click save to clip this page to Archivist</div>
+    <form>
+        <label for="title">Title</label><input type="text" name="title" placeholder="Enter Title">
+        <label for="author">Author</label><input type="text" name="title" placeholder="Enter Author">
+        <input type="button" value="Clip Page">
+    </form>
+  </body>
+</html>
