@@ -1,13 +1,11 @@
 function getFormData(){
-    var formElements = document.getElementById('metadata-form').elements;
+    var formElements = $("#metadata-form").children("input:not(#save-page-btn)");
+
     var formData = {};
 
-    for(var i = 0 ; i < formElements.length ; i++){
-        var input = formElements[i];
-        if( input.type != "button" ){
-            formData[ input.name ] = input.value;
-        }
-    }
+    formElements.each(function(){
+        formData[ this.name ] = this.value;
+    });
 
     return formData;
 }
@@ -16,19 +14,21 @@ function postDataToApi( xhr, formData ){
     xhr.open("POST", "http://localhost:3000/public/documents", true);
     xhr.setRequestHeader('Content-Type', 'application/json');
 
-    var data = JSON.stringify(formData)
+    var data = JSON.stringify(formData);
 
     xhr.send(data);
 }
 
-function click(e) {
+function click() {
     var formData = getFormData();
     var xhr = new XMLHttpRequest();
 
     postDataToApi(xhr, formData);
 
     xhr.onreadystatechange = function () {
-        if (this.readyState != 4) return;
+        if (this.readyState != 4) {
+            return;
+        }
 
         if (this.status == 200) {
             var data = JSON.parse(this.responseText);
@@ -42,54 +42,66 @@ function click(e) {
 
 function getMetadataFields(){
     return ([
-                { name: "Author", type: "text" },
-                { name: "Title", type: "text" }
+                { name: "Author", type: "string" },
+                { name: "Title", type: "string" }
            ]);
 }
 
+function getInputType(apiType){
+    switch( apiType ){
+        case "string":
+            return "text";
+        case "date":
+            return "date";
+    }
+}
+
+function generateMetadataLabel(metadataField){
+    return $("<label>" + metadataField["name"] + "</label>",
+        {
+            "htmlFor" : metadataField["id"]
+        }
+    );
+}
+
 function generateMetadataInput(metadataField){
-    var inputTemplate = document.querySelector('#input-template');
-    var label = inputTemplate.content.querySelector('label');
-    var input = inputTemplate.content.querySelector('input');
-
-    label.innerText = metadataField["name"];
-    label.htmlFor = metadataField["id"];
-
-    input.id = metadataField["id"];
-    input.name = metadataField["name"];
-    input.type = metadataField["type"];
-
-    var clone = document.importNode(inputTemplate.content, true); // Deep copy of DOM
-
-    return clone;
+    return $("<input />",
+        {
+            "id" : metadataField["id"],
+            "name" : metadataField["name"],
+            "type" : getInputType(metadataField["type"])
+        }
+    );
 }
 
 function generateMetadataInputs(metadataJson){
     var metadataInputs = [];
 
-    metadataJson.forEach(function(metadataField){
-       var id = metadataField.name.toLowerCase();
-       metadataField["id"] = id;
+        metadataJson.forEach(function(metadataField){
+            metadataField["id"] = metadataField.name.toLowerCase();
 
-        var fieldHtml = generateMetadataInput(metadataField);
-        metadataInputs.push(fieldHtml);
-    })
+            var inputHtml = generateMetadataInput(metadataField);
+            var labelHtml = generateMetadataLabel(metadataField);
+
+            metadataInputs.push(inputHtml);
+            metadataInputs.push(labelHtml);
+        });
 
     return metadataInputs;
 }
 
 function addMetadataInputs(metadataInputs){
-    var form = document.getElementById("metadata-form");
+    var form = $("#metadata-form");
 
-    for(var i = 0; i < metadataInputs.length; i++){
-        form.insertBefore(metadataInputs[i], form.firstChild);
-    }
+    metadataInputs.forEach(function(inputField){
+        form.prepend(inputField);
+    })
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     // Find button and add click event
-    var savePageBtn = document.getElementById("save-page-btn");
-    savePageBtn.addEventListener('click', click);
+    var savePageBtn = $("#save-page-btn");
+    savePageBtn.click(click);
 
     // Generate and add input fields for HTML form
     var metadataFields = getMetadataFields();
