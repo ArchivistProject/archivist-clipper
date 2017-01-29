@@ -4,13 +4,12 @@
     <title>Archivist</title>
       <link rel="stylesheet" type="text/css" href="styles/popup.css">
       <script src="../scripts/popup.js"></script>
+      <script src="../scripts/jquery-3.1.1.min.js"></script>
   </head>
   <body>
     <div class="header">Fill out the info below and click save to clip this page to Archivist</div>
-    <form>
-        <label for="title">Title</label><input type="text" id="title" name="title" placeholder="Enter Title">
-        <label for="author">Author</label><input type="text" id="author" name="author" placeholder="Enter Author">
-        <input type="button" value="Clip Page">
+    <form id="metadata-form">
+        <input id="save-page-btn" type="button" value="Save Page">
     </form>
   </body>
 </html>
