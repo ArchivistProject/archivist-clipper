@@ -1,110 +1,210 @@
-function getFormData(){
-    var formElements = $("#metadata-form").children("input:not(#save-page-btn)");
+const extensionDetected = [];
+const SINGLE_FILE_CORE_EXT_ID = 'jemlklgaibiijojffihnhieihhagocma';
 
-    var formData = {};
-
-    formElements.each(function(){
-        formData[ this.name ] = this.value;
-    });
-
-    return formData;
+function detectExtension(extensionId, callback) {
+  let img;
+  if (extensionDetected[extensionId]) {
+    callback(true);
+  } else {
+    img = new Image();
+    img.src = `chrome-extension://${extensionId}/resources/icon_16.png`;
+    img.onload = function () {
+      extensionDetected[extensionId] = true;
+      callback(true);
+    };
+    img.onerror = function () {
+      extensionDetected[extensionId] = false;
+      callback(false);
+    };
+  }
 }
 
-function postDataToApi( xhr, formData ){
-    xhr.open("POST", "http://localhost:3000/public/documents", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
+function getConfig() {
+  return localStorage.config ? JSON.parse(localStorage.config) : {
+    removeFrames: false,
+    removeScripts: true,
+    removeObjects: true,
+    removeHidden: false,
+    removeUnusedCSSRules: false,
+    processInBackground: true,
+    maxFrameSize: 2,
+    displayProcessedPage: false,
+    getContent: true,
+    getRawDoc: false,
+    displayInContextMenu: true,
+    sendToPageArchiver: false,
+    displayBanner: true,
+  };
+}
 
-    var data = JSON.stringify(formData);
+function processable(url) {
+  return ((url.indexOf('http://') === 0 || url.indexOf('https://') === 0));
+}
 
-    xhr.send(data);
+function invokeSinglePage(tabId, url, processSelection, processFrame) {
+  detectExtension(SINGLE_FILE_CORE_EXT_ID, (detected) => {
+    if (detected) {
+      if (processable(url)) {
+        chrome.extension.sendMessage(SINGLE_FILE_CORE_EXT_ID, {
+          processSelection,
+          processFrame,
+          id: tabId,
+          config: getConfig(),
+        });
+      }
+    } else {
+      alert('missing core');
+    }
+  });
+}
+
+
+chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
+  let blob,
+    url;
+  if (request.processStart) {
+    // singlefile.ui.notifyProcessStart(request.tabId, request.processingPagesCount);
+    if (request.blockingProcess) {
+      chrome.tabs.sendMessage(request.tabId, {
+        processStart: true,
+      });
+    }
+  }
+  if (request.processProgress) {
+    // singlefile.ui.notifyProcessProgress(request.index, request.maxIndex);
+  }
+  if (request.processEnd) {
+    if (request.blockingProcess) {
+      chrome.tabs.sendMessage(request.tabId, {
+        processEnd: true,
+      });
+    }
+    blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
+      type: 'text/html',
+    });
+    url = URL.createObjectURL(blob);
+    chrome.downloads.download({url:url, filename: "archived-page.html"});
+    // singlefile.ui.notifyProcessEnd(request.tabId, request.processingPagesCount, singlefile.config.get().displayBanner, url, request.title);
+  }
+  if (request.processError) {
+    // singlefile.ui.notifyProcessError(request.tabId);
+  }
+});
+
+function postDataToApi(xhr, formData) {
+  xhr.open('POST', 'http://localhost:3000/public/documents', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+
+  const data = JSON.stringify(formData);
+
+  xhr.send(data);
+}
+
+function getFormData() {
+  const formElements = $('#metadata-form').children('input:not(#save-page-btn)');
+
+  const formData = {};
+
+  formElements.each(function () {
+    formData[this.name] = this.value;
+  });
+
+  return formData;
 }
 
 function click() {
-    var formData = getFormData();
-    var xhr = new XMLHttpRequest();
+  const formData = getFormData();
+  const xhr = new XMLHttpRequest();
 
-    postDataToApi(xhr, formData);
+  chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+    const activeTab = tabs[0];
+    invokeSinglePage(activeTab.id, activeTab.url, false, false);
+  });
 
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) {
-            return;
-        }
+  // postDataToApi(xhr, formData);
 
-        if (this.status == 200) {
-            var data = JSON.parse(this.responseText);
-
-            // we get the returned data
-        }
-
-        // end of state change: it can be after some time (async)
-    };
-}
-
-function getMetadataFields(){
-    return ([
-                { name: "Author", type: "string" },
-                { name: "Title", type: "string" }
-           ]);
-}
-
-function getInputType(apiType){
-    switch( apiType ){
-        case "string":
-            return "text";
-        case "date":
-            return "date";
+  xhr.onreadystatechange = function () {
+    if (this.readyState !== 4) {
+      return;
     }
+
+    if (this.status === 200) {
+      const data = JSON.parse(this.responseText);
+
+      // we get the returned data
+    }
+
+    // end of state change: it can be after some time (async)
+  };
 }
 
-function generateMetadataLabel(metadataField){
-    return $("<label>" + metadataField["name"] + "</label>",
-        {
-            "htmlFor" : metadataField["id"]
-        }
-    );
+function getMetadataFields() {
+  return ([
+    { name: 'Author', type: 'string' },
+    { name: 'Title', type: 'string' },
+  ]);
 }
 
-function generateMetadataInput(metadataField){
-    return $("<input />",
-        {
-            "id" : metadataField["id"],
-            "name" : metadataField["name"],
-            "type" : getInputType(metadataField["type"])
-        }
-    );
+function getInputType(apiType) {
+  switch (apiType) {
+    case 'string':
+      return 'text';
+    case 'date':
+      return 'date';
+    default:
+      return null;
+  }
 }
 
-function generateMetadataInputs(metadataJson){
-    var metadataInputs = [];
-
-        metadataJson.forEach(function(metadataField){
-            metadataField["id"] = metadataField.name.toLowerCase();
-
-            var inputHtml = generateMetadataInput(metadataField);
-            var labelHtml = generateMetadataLabel(metadataField);
-
-            metadataInputs.push(inputHtml);
-            metadataInputs.push(labelHtml);
-        });
-
-    return metadataInputs;
+function generateMetadataLabel(metadataField) {
+  return $(`<label>${metadataField.name}</label>`,{
+      htmlFor: metadataField.id,
+      //text: metadataField.name
+    }
+  );
 }
 
-function addMetadataInputs(metadataInputs){
-    var form = $("#metadata-form");
-
-    metadataInputs.forEach(function(inputField){
-        form.prepend(inputField);
-    })
+function generateMetadataInput(metadataField) {
+  return $('<input />',
+    {
+      id: metadataField.id,
+      name: metadataField.name,
+      type: getInputType(metadataField.type),
+    }
+  );
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Find button and add click event
-    var savePageBtn = $("#save-page-btn");
-    savePageBtn.click(click);
+function generateMetadataInputs(metadataJson) {
+  const metadataInputs = [];
 
-    // Generate and add input fields for HTML form
-    var metadataFields = getMetadataFields();
-    var metadataInputs = generateMetadataInputs(metadataFields);
-    addMetadataInputs(metadataInputs);
+  metadataJson.forEach((metadataField) => {
+    metadataField.id = metadataField.name.toLowerCase();
+
+    const inputHtml = generateMetadataInput(metadataField);
+    const labelHtml = generateMetadataLabel(metadataField);
+
+    metadataInputs.push(inputHtml);
+    metadataInputs.push(labelHtml);
+  });
+
+  return metadataInputs;
+}
+
+function addMetadataInputs(metadataInputs) {
+  const form = $('#metadata-form');
+
+  metadataInputs.forEach((inputField) => {
+    form.prepend(inputField);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Find button and add click event
+  const savePageBtn = $('#save-page-btn');
+  savePageBtn.click(click);
+
+  // Generate and add input fields for HTML form
+  const metadataFields = getMetadataFields();
+  const metadataInputs = generateMetadataInputs(metadataFields);
+  addMetadataInputs(metadataInputs);
 });
