@@ -8,11 +8,11 @@ function detectExtension(extensionId, callback) {
   } else {
     img = new Image();
     img.src = `chrome-extension://${extensionId}/resources/icon_16.png`;
-    img.onload = function () {
+    img.onload = () => {
       extensionDetected[extensionId] = true;
       callback(true);
     };
-    img.onerror = function () {
+    img.onerror = () => {
       extensionDetected[extensionId] = false;
       callback(false);
     };
@@ -53,7 +53,7 @@ function invokeSinglePage(tabId, url, processSelection, processFrame) {
         });
       }
     } else {
-      alert('missing core');
+      console.log('missing core');
     }
   });
 }
@@ -84,8 +84,7 @@ chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) =
     });
     url = URL.createObjectURL(blob);
     console.log(url);
-    // chrome.downloads.download({url:url, filename: "archived-page.html"}); // Leaving for now in case want to verify blob is correct
-    // singlefile.ui.notifyProcessEnd(request.tabId, request.processingPagesCount, singlefile.config.get().displayBanner, url, request.title);
+    // chrome.downloads.download({url:url, filename: "archived-page.html"});
   }
   if (request.processError) {
     // singlefile.ui.notifyProcessError(request.tabId);
@@ -97,14 +96,14 @@ function getFormData() {
 
   const formData = {};
 
-  formElements.each(function () {
+  formElements.each(() => {
     formData[this.name] = this.value;
   });
 
   return formData;
 }
 
-function handlePostSuccess(data, status){
+function handlePostSuccess(data, status) {
   console.log(status);
   console.log(data);
 }
@@ -143,10 +142,9 @@ function getInputType(apiType) {
 }
 
 function generateMetadataLabel(metadataField) {
-  return $(`<label>${metadataField.name}</label>`,{
-      htmlFor: metadataField.id,
-    }
-  );
+  return $(`<label>${metadataField.name}</label>`, {
+    htmlFor: metadataField.id,
+  });
 }
 
 function generateMetadataInput(metadataField) {
@@ -155,7 +153,7 @@ function generateMetadataInput(metadataField) {
       id: metadataField.id,
       name: metadataField.name,
       type: getInputType(metadataField.type),
-    }
+    },
   );
 }
 

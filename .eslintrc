@@ -8,7 +8,6 @@
     "chrome" : false
   },
   "rules": {
-    "indent": [2, 4, { "SwitchCase": 1 }],
     "default-case": 0,
     "quotes": [2, "single"],
     "semi": [2, "always"],
