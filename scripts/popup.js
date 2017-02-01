@@ -83,22 +83,14 @@ chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) =
       type: 'text/html',
     });
     url = URL.createObjectURL(blob);
-    chrome.downloads.download({url:url, filename: "archived-page.html"});
+    console.log(url);
+    // chrome.downloads.download({url:url, filename: "archived-page.html"}); // Leaving for now in case want to verify blob is correct
     // singlefile.ui.notifyProcessEnd(request.tabId, request.processingPagesCount, singlefile.config.get().displayBanner, url, request.title);
   }
   if (request.processError) {
     // singlefile.ui.notifyProcessError(request.tabId);
   }
 });
-
-function postDataToApi(xhr, formData) {
-  xhr.open('POST', 'http://localhost:3000/public/documents', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-
-  const data = JSON.stringify(formData);
-
-  xhr.send(data);
-}
 
 function getFormData() {
   const formElements = $('#metadata-form').children('input:not(#save-page-btn)');
@@ -112,30 +104,24 @@ function getFormData() {
   return formData;
 }
 
-function click() {
+function handlePostSuccess(data, status){
+  console.log(status);
+  console.log(data);
+}
+
+function postDataToApi() {
   const formData = getFormData();
-  const xhr = new XMLHttpRequest();
+
+  $.post('http://localhost:3000/public/documents', JSON.stringify(formData), handlePostSuccess);
+}
+
+function click() {
+  postDataToApi();
 
   chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
     const activeTab = tabs[0];
     invokeSinglePage(activeTab.id, activeTab.url, false, false);
   });
-
-  // postDataToApi(xhr, formData);
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) {
-      return;
-    }
-
-    if (this.status === 200) {
-      const data = JSON.parse(this.responseText);
-
-      // we get the returned data
-    }
-
-    // end of state change: it can be after some time (async)
-  };
 }
 
 function getMetadataFields() {
@@ -159,7 +145,6 @@ function getInputType(apiType) {
 function generateMetadataLabel(metadataField) {
   return $(`<label>${metadataField.name}</label>`,{
       htmlFor: metadataField.id,
-      //text: metadataField.name
     }
   );
 }
