@@ -60,7 +60,7 @@ function invokeSinglePage(tabId, url, processSelection, processFrame) {
 
 
 chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
-  let blob,
+  var blob,
     url;
   if (request.processStart) {
     // singlefile.ui.notifyProcessStart(request.tabId, request.processingPagesCount);
