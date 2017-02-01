@@ -13,6 +13,9 @@
     "semi": [2, "always"],
     "no-unused-vars": [1, {"vars": "all", "args": "none"}],
     "no-console": 0,
+    "no-param-reassign": [2,{
+        "props":false
+    }],
     "max-len": [1, { "code": 130 }],
     "import/no-unresolved": 0,
     "import/extensions": 0,
