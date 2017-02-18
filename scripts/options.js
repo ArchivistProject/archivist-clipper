@@ -3,7 +3,7 @@ $(document).ready(() => {
   const apiKey = $('#api_key');
 
   function getFormData() {
-    const formElements = $('form input:not(#save)');
+    const formElements = $('.setting_item input');
 
     const formData = {};
 
