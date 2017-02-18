@@ -3,12 +3,12 @@ $(document).ready(() => {
   const apiKey = $('#api_key');
 
   function getFormData() {
-    const formElements = $('form').children('input:not(#save)');
+    const formElements = $('form input:not(#save)');
 
     const formData = {};
 
-    formElements.each(() => {
-      formData[this.name] = this.value;
+    formElements.each((element) => {
+      formData[formElements[element].getAttribute('name')] = formElements[element].value;
     });
 
     return formData;
@@ -16,8 +16,6 @@ $(document).ready(() => {
 
   function saveOptions() {
     const saveValues = getFormData();
-
-    saveValues[apiKey.attr('name')] = apiKey.val();
 
     chrome.storage.sync.set(saveValues, () => {
       // Update status to let user know options were saved.
