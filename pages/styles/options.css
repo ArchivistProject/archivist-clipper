@@ -1,0 +1,39 @@
+* {
+    box-sizing: border-box;
+}
+
+form {
+    text-align: center;
+}
+
+.setting_item {
+    height: 30px;
+    font-size: 14px;
+    line-height: 19px;
+}
+.setting_item label {
+    padding-right: 15px;
+    display: inline-block;
+    vertical-align: top;
+    width: 20%;
+    line-height: 30px;
+
+}
+.setting_item input {
+    padding: 3px 5px;
+    display: inline-block;
+    vertical-align: top;
+    width: 80%;
+    height: 100%;
+}
+
+button#save {
+    margin: 15px auto;
+    display: block;
+}
+
+#status{
+    display: none;
+    width: 100%;
+    height: auto;
+}

@@ -1,15 +1,19 @@
 {
   "name": "Archivist Clipper",
   "description": "The extension portion of Archivist, used to upload new html files",
-  "version": "0.2",
+  "version": "0.3",
   "permissions": [
     "tabs", "http://*/*", "https://*/*",
-    "downloads"
+    "downloads","storage"
   ],
   "browser_action": {
       "default_title": "Archive this page",
       "default_icon": "resources/icon_16.png",
       "default_popup": "pages/popup.html"
+  },
+  "options_ui": {
+    "page": "pages/options.html",
+    "chrome_style": true
   },
   "icons": {
     "16": "resources/icon_16.png",

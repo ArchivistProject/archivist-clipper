@@ -153,8 +153,7 @@ function generateMetadataInput(metadataField) {
       id: metadataField.id,
       name: metadataField.name,
       type: getInputType(metadataField.type),
-    },
-  );
+    });
 }
 
 function generateMetadataInputs(metadataJson) {
