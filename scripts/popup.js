@@ -58,6 +58,72 @@ function invokeSinglePage(tabId, url, processSelection, processFrame) {
   });
 }
 
+function click() {
+  chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+    const activeTab = tabs[0];
+    invokeSinglePage(activeTab.id, activeTab.url, false, false);
+  });
+}
+
+function handlePostSuccess(data, status) {
+  console.log(status);
+  console.log(data);
+}
+
+function getFormData() {
+  const formElements = $('#metadata-form').children('input:not(#save-page-btn)');
+
+  const formData = {};
+  // create object with name, type, value, group=generic
+
+  formElements.each((element) => {
+    formData[formElements[element].getAttribute('name')] = formElements[element].value;
+  });
+
+  return formData;
+}
+
+function getMetadataFields() {
+  return ([
+    { name: 'Author', type: 'string', group: 'generic' },
+    { name: 'Title', type: 'string', group: 'generic' },
+  ]);
+}
+
+function postDataToApi(blob) {
+  const formData = getFormData(); // Change this to fit to the field below
+  const metadataFields = getMetadataFields();
+
+  // loop through each metadataField, add the value from form data from the key
+  metadataFields.forEach((field) => { // better for loop to use?
+    field.value = formData[field.name];
+  });
+
+  const reader = new window.FileReader();
+  reader.readAsDataURL(blob);
+  reader.onloadend = () => {
+    const base64data = reader.result;
+    // console.log(base64data);
+
+    const documentData = {
+      document: {
+        file: base64data,
+        // file: 'data:text/html;base64, TEST',
+        tags: ['t1'],
+        metadata_fields: metadataFields,
+      },
+    };
+
+    $.ajax({
+      url: 'http://localhost:3000/public/documents',
+      type: 'POST',
+      data: JSON.stringify(documentData),
+      success: handlePostSuccess,
+      contentType: 'application/json',
+      dataType: 'json',
+    });
+  };
+}
 
 chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
   let blob;
@@ -82,53 +148,14 @@ chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) =
     blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
       type: 'text/html',
     });
-    url = URL.createObjectURL(blob);
-    console.log(url);
-    // chrome.downloads.download({url:url, filename: "archived-page.html"});
+    // url = URL.createObjectURL(blob);
+
+    postDataToApi(blob);
   }
   if (request.processError) {
     // singlefile.ui.notifyProcessError(request.tabId);
   }
 });
-
-function getFormData() {
-  const formElements = $('#metadata-form').children('input:not(#save-page-btn)');
-
-  const formData = {};
-
-  formElements.each(() => {
-    formData[this.name] = this.value;
-  });
-
-  return formData;
-}
-
-function handlePostSuccess(data, status) {
-  console.log(status);
-  console.log(data);
-}
-
-function postDataToApi() {
-  const formData = getFormData();
-
-  $.post('http://localhost:3000/public/documents', JSON.stringify(formData), handlePostSuccess);
-}
-
-function click() {
-  postDataToApi();
-
-  chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-    const activeTab = tabs[0];
-    invokeSinglePage(activeTab.id, activeTab.url, false, false);
-  });
-}
-
-function getMetadataFields() {
-  return ([
-    { name: 'Author', type: 'string' },
-    { name: 'Title', type: 'string' },
-  ]);
-}
 
 function getInputType(apiType) {
   switch (apiType) {
