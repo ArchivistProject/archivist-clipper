@@ -96,7 +96,7 @@ function postDataToApi(blob) {
 
   // loop through each metadataField, add the value from form data from the key
   metadataFields.forEach((field) => { // better for loop to use?
-    field.value = formData[field.name];
+    field.data = formData[field.name];
   });
 
   const reader = new window.FileReader();
@@ -127,7 +127,6 @@ function postDataToApi(blob) {
 
 chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
   let blob;
-  let url;
   if (request.processStart) {
     // singlefile.ui.notifyProcessStart(request.tabId, request.processingPagesCount);
     if (request.blockingProcess) {
@@ -148,7 +147,6 @@ chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) =
     blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
       type: 'text/html',
     });
-    // url = URL.createObjectURL(blob);
 
     postDataToApi(blob);
   }
