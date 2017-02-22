@@ -103,6 +103,8 @@ $(window).ready(() => {
   }
 
   function invokeSinglePage(tabId, url, processSelection, processFrame) {
+    const statusMessage = $('#status-message');
+
     detectExtension(SINGLE_FILE_CORE_EXT_ID, (detected) => {
       if (detected) {
         if (processable(url)) {
@@ -112,9 +114,12 @@ $(window).ready(() => {
             id: tabId,
             config: getConfig(),
           });
+        } else {
+          statusMessage.html('This page can not be processed');
         }
       } else {
         console.log('missing core');
+        statusMessage.html('Missing core');
       }
     });
   }
@@ -128,31 +133,42 @@ $(window).ready(() => {
 
   chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
     let blob;
+    const statusMessage = $('#status-message');
+    const saveBtn = $('#save-page-btn');
+
     if (request.processStart) {
-      // singlefile.ui.notifyProcessStart(request.tabId, request.processingPagesCount);
+      statusMessage.html('Initializing...');
+
       if (request.blockingProcess) {
         chrome.tabs.sendMessage(request.tabId, {
           processStart: true,
         });
       }
     }
+
     if (request.processProgress) {
-      // singlefile.ui.notifyProcessProgress(request.index, request.maxIndex);
+      saveBtn.val('Saving...').prop('disabled', true);
+      statusMessage.html(`Completion Percent:  ${(request.index / request.maxIndex) * 100}%`);
     }
+
     if (request.processEnd) {
       if (request.blockingProcess) {
         chrome.tabs.sendMessage(request.tabId, {
           processEnd: true,
         });
       }
+
       blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
         type: 'text/html',
       });
 
       postDataToApi(blob);
+      saveBtn.val('Saved');
     }
+
     if (request.processError) {
-      // singlefile.ui.notifyProcessError(request.tabId);
+      console.log(request);
+      statusMessage.html('Error');
     }
   });
   /* endregion External Extension Section */

@@ -31,7 +31,7 @@ label, input{
 }
 
 input[type="button"]{
-    margin: 10px auto 0;
+    margin: 10px auto 5px;
     display: block;
     text-transform: uppercase;
 }
