@@ -1,217 +1,257 @@
-const extensionDetected = [];
-const SINGLE_FILE_CORE_EXT_ID = 'jemlklgaibiijojffihnhieihhagocma';
+$(window).ready(() => {
+  const Archivist = {
+    metadataFields: [],
+  };
 
-function detectExtension(extensionId, callback) {
-  let img;
-  if (extensionDetected[extensionId]) {
-    callback(true);
-  } else {
-    img = new Image();
-    img.src = `chrome-extension://${extensionId}/resources/icon_16.png`;
-    img.onload = () => {
-      extensionDetected[extensionId] = true;
-      callback(true);
-    };
-    img.onerror = () => {
-      extensionDetected[extensionId] = false;
-      callback(false);
+  /* region Post */
+  function handlePostSuccess(data, status) {
+    console.log(status);
+    console.log(data);
+  }
+
+  function getFormData() {
+    const formElements = $('.metadata_item input');
+
+    const formData = {};
+    // create object with name, type, value, group=generic
+
+    formElements.each((element) => {
+      const curElement = formElements[element];
+      formData[curElement.getAttribute('name')] = curElement.value;
+    });
+
+    return formData;
+  }
+
+  function postDataToApi(blob) {
+    const formData = getFormData();
+
+    // loop through each metadataField, add the value from form data to expected API format
+    Archivist.metadataFields.forEach((field) => {
+      field.data = formData[field.name];
+    });
+
+    const reader = new window.FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      // console.log(base64data);
+
+      const documentData = {
+        document: {
+          file: base64data,
+          // file: 'data:text/html;base64, TEST',
+          tags: ['t1'],
+          metadata_fields: Archivist.metadataFields,
+        },
+      };
+
+      $.ajax({
+        url: 'http://localhost:3000/public/documents',
+        type: 'POST',
+        data: JSON.stringify(documentData),
+        success: handlePostSuccess,
+        contentType: 'application/json',
+        dataType: 'json',
+      });
     };
   }
-}
+  /* endregion Post */
 
-function getConfig() {
-  return localStorage.config ? JSON.parse(localStorage.config) : {
-    removeFrames: false,
-    removeScripts: true,
-    removeObjects: true,
-    removeHidden: false,
-    removeUnusedCSSRules: false,
-    processInBackground: true,
-    maxFrameSize: 2,
-    displayProcessedPage: false,
-    getContent: true,
-    getRawDoc: false,
-    displayInContextMenu: true,
-    sendToPageArchiver: false,
-    displayBanner: true,
-  };
-}
+  /* region External Extension Section */
+  const extensionDetected = [];
+  const SINGLE_FILE_CORE_EXT_ID = 'jemlklgaibiijojffihnhieihhagocma';
 
-function processable(url) {
-  return ((url.indexOf('http://') === 0 || url.indexOf('https://') === 0));
-}
+  function detectExtension(extensionId, callback) {
+    let img;
+    if (extensionDetected[extensionId]) {
+      callback(true);
+    } else {
+      img = new Image();
+      img.src = `chrome-extension://${extensionId}/resources/icon_16.png`;
+      img.onload = () => {
+        extensionDetected[extensionId] = true;
+        callback(true);
+      };
+      img.onerror = () => {
+        extensionDetected[extensionId] = false;
+        callback(false);
+      };
+    }
+  }
 
-function invokeSinglePage(tabId, url, processSelection, processFrame) {
-  detectExtension(SINGLE_FILE_CORE_EXT_ID, (detected) => {
-    if (detected) {
-      if (processable(url)) {
-        chrome.extension.sendMessage(SINGLE_FILE_CORE_EXT_ID, {
-          processSelection,
-          processFrame,
-          id: tabId,
-          config: getConfig(),
+  function getConfig() {
+    return localStorage.config ? JSON.parse(localStorage.config) : {
+      removeFrames: false,
+      removeScripts: true,
+      removeObjects: true,
+      removeHidden: false,
+      removeUnusedCSSRules: false,
+      processInBackground: true,
+      maxFrameSize: 2,
+      displayProcessedPage: false,
+      getContent: true,
+      getRawDoc: false,
+      displayInContextMenu: true,
+      sendToPageArchiver: false,
+      displayBanner: true,
+    };
+  }
+
+  function processable(url) {
+    return ((url.indexOf('http://') === 0 || url.indexOf('https://') === 0));
+  }
+
+  function invokeSinglePage(tabId, url, processSelection, processFrame) {
+    detectExtension(SINGLE_FILE_CORE_EXT_ID, (detected) => {
+      if (detected) {
+        if (processable(url)) {
+          chrome.extension.sendMessage(SINGLE_FILE_CORE_EXT_ID, {
+            processSelection,
+            processFrame,
+            id: tabId,
+            config: getConfig(),
+          });
+        }
+      } else {
+        console.log('missing core');
+      }
+    });
+  }
+
+  function click() {
+    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+      const activeTab = tabs[0];
+      invokeSinglePage(activeTab.id, activeTab.url, false, false);
+    });
+  }
+
+  chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
+    let blob;
+    if (request.processStart) {
+      // singlefile.ui.notifyProcessStart(request.tabId, request.processingPagesCount);
+      if (request.blockingProcess) {
+        chrome.tabs.sendMessage(request.tabId, {
+          processStart: true,
         });
       }
-    } else {
-      console.log('missing core');
+    }
+    if (request.processProgress) {
+      // singlefile.ui.notifyProcessProgress(request.index, request.maxIndex);
+    }
+    if (request.processEnd) {
+      if (request.blockingProcess) {
+        chrome.tabs.sendMessage(request.tabId, {
+          processEnd: true,
+        });
+      }
+      blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
+        type: 'text/html',
+      });
+
+      postDataToApi(blob);
+    }
+    if (request.processError) {
+      // singlefile.ui.notifyProcessError(request.tabId);
     }
   });
-}
+  /* endregion External Extension Section */
 
-function click() {
-  chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-    const activeTab = tabs[0];
-    invokeSinglePage(activeTab.id, activeTab.url, false, false);
-  });
-}
+  /* region Get */
+  // Converts the given API type to an input type
+  function getInputType(apiType) {
+    switch (apiType) {
+      case 'string':
+        return 'text';
+      case 'date':
+        return 'date';
+      default:
+        return null;
+    }
+  }
 
-function handlePostSuccess(data, status) {
-  console.log(status);
-  console.log(data);
-}
+  // Generates html for metadata field's label
+  function generateMetadataLabel(metadataField) {
+    return $(`<label>${metadataField.name}</label>`, {
+      htmlFor: metadataField.id,
+    });
+  }
 
-function getFormData() {
-  const formElements = $('#metadata-form').children('input:not(#save-page-btn)');
+  // Generates html for metadata field's input field
+  function generateMetadataInput(metadataField) {
+    return $('<input />',
+      {
+        id: metadataField.id,
+        name: metadataField.name,
+        type: getInputType(metadataField.type),
+      });
+  }
 
-  const formData = {};
-  // create object with name, type, value, group=generic
+  // Generates html for metadata field and returns as array
+  function generateMetadataInputs(metadataFields) {
+    const metadataInputs = [];
+    metadataFields.forEach((metadataField) => {
+      metadataField.id = metadataField.name.toLowerCase();
 
-  formElements.each((element) => {
-    formData[formElements[element].getAttribute('name')] = formElements[element].value;
-  });
+      const container = $('<div class="metadata_item"></div>');
+      container.prepend(generateMetadataInput(metadataField));
+      container.prepend(generateMetadataLabel(metadataField));
 
-  return formData;
-}
+      metadataInputs.push(container);
+    });
 
-function getMetadataFields() {
-  return ([
-    { name: 'Author', type: 'string', group: 'generic' },
-    { name: 'Title', type: 'string', group: 'generic' },
-  ]);
-}
+    return metadataInputs;
+  }
 
-function postDataToApi(blob) {
-  const formData = getFormData(); // Change this to fit to the field below
-  const metadataFields = getMetadataFields();
+  // Adds the given elements to the end of the form
+  function appendToForm(elements) {
+    const form = $('#metadata-form');
 
-  // loop through each metadataField, add the value from form data from the key
-  metadataFields.forEach((field) => { // better for loop to use?
-    field.data = formData[field.name];
-  });
+    elements.forEach((element) => {
+      form.prepend(element);
+    });
+  }
 
-  const reader = new window.FileReader();
-  reader.readAsDataURL(blob);
-  reader.onloadend = () => {
-    const base64data = reader.result;
-    // console.log(base64data);
+  function generateFormHtml(groupData) {
+    const sections = [];
+    groupData.forEach((group) => {
+      const sectionDiv = $(`<div class="section-${group.name}"><h1>${group.name}</h1></div>`);
+      const metadataInputs = generateMetadataInputs(group.fields);
+      metadataInputs.forEach((htmlElement) => {
+        $(htmlElement).appendTo(sectionDiv);
+      });
+      sections.unshift(sectionDiv);
+    });
+    appendToForm(sections);
+  }
 
-    const documentData = {
-      document: {
-        file: base64data,
-        // file: 'data:text/html;base64, TEST',
-        tags: ['t1'],
-        metadata_fields: metadataFields,
-      },
-    };
+  function extractMetadataFields(groupData) {
+    groupData.forEach((group) => {
+      group.fields.forEach((field) => {
+        Archivist.metadataFields.push(field);
+      });
+    });
+  }
 
+  function handleMetadataGroupSuccess(data) {
+    generateFormHtml(data.groups);
+    extractMetadataFields(data.groups);
+  }
+
+  function getMetadataFieldGroups() {
     $.ajax({
-      url: 'http://localhost:3000/public/documents',
-      type: 'POST',
-      data: JSON.stringify(documentData),
-      success: handlePostSuccess,
+      url: 'http://localhost:3000/system/groups',
+      type: 'GET',
+      success: handleMetadataGroupSuccess,
       contentType: 'application/json',
       dataType: 'json',
     });
-  };
-}
-
-chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
-  let blob;
-  if (request.processStart) {
-    // singlefile.ui.notifyProcessStart(request.tabId, request.processingPagesCount);
-    if (request.blockingProcess) {
-      chrome.tabs.sendMessage(request.tabId, {
-        processStart: true,
-      });
-    }
   }
-  if (request.processProgress) {
-    // singlefile.ui.notifyProcessProgress(request.index, request.maxIndex);
-  }
-  if (request.processEnd) {
-    if (request.blockingProcess) {
-      chrome.tabs.sendMessage(request.tabId, {
-        processEnd: true,
-      });
-    }
-    blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
-      type: 'text/html',
-    });
+  /* endregion Get */
 
-    postDataToApi(blob);
-  }
-  if (request.processError) {
-    // singlefile.ui.notifyProcessError(request.tabId);
-  }
-});
+  /* region Init */
+  $('#save-page-btn').click(click);
 
-function getInputType(apiType) {
-  switch (apiType) {
-    case 'string':
-      return 'text';
-    case 'date':
-      return 'date';
-    default:
-      return null;
-  }
-}
-
-function generateMetadataLabel(metadataField) {
-  return $(`<label>${metadataField.name}</label>`, {
-    htmlFor: metadataField.id,
-  });
-}
-
-function generateMetadataInput(metadataField) {
-  return $('<input />',
-    {
-      id: metadataField.id,
-      name: metadataField.name,
-      type: getInputType(metadataField.type),
-    });
-}
-
-function generateMetadataInputs(metadataJson) {
-  const metadataInputs = [];
-
-  metadataJson.forEach((metadataField) => {
-    metadataField.id = metadataField.name.toLowerCase();
-
-    const inputHtml = generateMetadataInput(metadataField);
-    const labelHtml = generateMetadataLabel(metadataField);
-
-    metadataInputs.push(inputHtml);
-    metadataInputs.push(labelHtml);
-  });
-
-  return metadataInputs;
-}
-
-function addMetadataInputs(metadataInputs) {
-  const form = $('#metadata-form');
-
-  metadataInputs.forEach((inputField) => {
-    form.prepend(inputField);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Find button and add click event
-  const savePageBtn = $('#save-page-btn');
-  savePageBtn.click(click);
-
-  // Generate and add input fields for HTML form
-  const metadataFields = getMetadataFields();
-  const metadataInputs = generateMetadataInputs(metadataFields);
-  addMetadataInputs(metadataInputs);
+  getMetadataFieldGroups();
+  /* endregion Init */
 });
