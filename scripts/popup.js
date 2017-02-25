@@ -31,7 +31,7 @@ $(window).ready(() => {
       field.data = formData[field.name];
     });
 
-    const tagsData = $('#tags').val();
+    const tagsData = $('#tags').val().split(' ');
     const descriptionData = $('#description').val();
 
     const reader = new window.FileReader();
@@ -42,8 +42,7 @@ $(window).ready(() => {
       const documentData = {
         document: {
           file: base64data,
-          // file: 'data:text/html;base64, TEST',
-          tags: [tagsData],
+          tags: tagsData,
           description: descriptionData,
           metadata_fields: Archivist.metadataFields,
         },
@@ -195,9 +194,9 @@ $(window).ready(() => {
       const paddedDate = (`0${today.getDate()}`).slice(-2);
       const dateAdded = `${today.getFullYear()}-${paddedMonth}-${paddedDate}`;
 
-      $('#title').val(title);
-      $('#date_added').val(dateAdded).prop('disabled', true);
-      $('#url').val(url).prop('disabled', true);
+      $('#generic-title').val(title);
+      $('#generic-date_added').val(dateAdded).prop('disabled', true);
+      $('#website-url').val(url).prop('disabled', true);
     });
   }
 
@@ -221,23 +220,24 @@ $(window).ready(() => {
   }
 
   // Generates html for metadata field's input field
-  function generateMetadataInput(metadataField) {
+  function generateMetadataInput(metadataField, groupName) {
     return $('<input />',
       {
-        id: metadataField.id.split(' ').join('_'), // ID currently has spaces in it, which is no good for html ids
+        // ID currently has spaces in it, which is no good for html ids
+        id: `${groupName.toLowerCase()}-${metadataField.id.replace(/ /i, '_')}`,
         name: metadataField.name,
         type: getInputType(metadataField.type),
       });
   }
 
   // Generates html for metadata field and returns as array
-  function generateMetadataInputs(metadataFields) {
+  function generateMetadataInputs(metadataFields, groupName) {
     const metadataInputs = [];
     metadataFields.forEach((metadataField) => {
       metadataField.id = metadataField.name.toLowerCase();
 
       const container = $('<div class="metadata_item"></div>');
-      container.prepend(generateMetadataInput(metadataField));
+      container.prepend(generateMetadataInput(metadataField, groupName));
       container.prepend(generateMetadataLabel(metadataField));
 
       metadataInputs.push(container);
@@ -265,11 +265,11 @@ $(window).ready(() => {
   function generateFormHtml(groupData) {
     const sections = [];
     const checkboxDiv = $('<div class="metadata-checkboxes"><h1>Metadata Groups</h1></div>');
-    const defaultGroups = ['Generic'];
+    const defaultGroups = ['Generic', 'Website'];
     groupData.forEach((group) => {
       // Add Section
-      const sectionDiv = $(`<div id="section-${group.name}"><h1>${group.name}</h1></div>`);
-      const metadataInputs = generateMetadataInputs(group.fields);
+      const sectionDiv = $(`<div id="section-${group.name.toLowerCase()}"><h1>${group.name}</h1></div>`);
+      const metadataInputs = generateMetadataInputs(group.fields, group.name);
       metadataInputs.forEach((htmlElement) => {
         $(htmlElement).appendTo(sectionDiv);
       });
@@ -280,7 +280,7 @@ $(window).ready(() => {
 
       const groupCheckbox = $(`<label>
                                 <input ${disabledText} type="checkbox" 
-                                data-section-name="${group.name}" /> ${group.name}
+                                data-section-name="${group.name.toLowerCase()}" /> ${group.name}
                               </label>`);
       groupCheckbox.children('input').click(handleGroupClick);
       groupCheckbox.appendTo(checkboxDiv);
