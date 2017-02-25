@@ -35,3 +35,7 @@ input[type="button"]{
     display: block;
     text-transform: uppercase;
 }
+
+textarea {
+    width: 100%;
+}

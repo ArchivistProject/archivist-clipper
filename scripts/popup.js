@@ -31,6 +31,9 @@ $(window).ready(() => {
       field.data = formData[field.name];
     });
 
+    const tagsData = $('#tags').val();
+    const descriptionData = $('#description').val();
+
     const reader = new window.FileReader();
     reader.readAsDataURL(blob);
     reader.onloadend = () => {
@@ -41,7 +44,8 @@ $(window).ready(() => {
         document: {
           file: base64data,
           // file: 'data:text/html;base64, TEST',
-          tags: ['t1'],
+          tags: [tagsData],
+          description: descriptionData,
           metadata_fields: Archivist.metadataFields,
         },
       };
@@ -174,6 +178,11 @@ $(window).ready(() => {
   /* endregion External Extension Section */
 
   /* region Get */
+  function handleGroupClick() {
+    const sectionName = $(this).data('section-name');
+    $(`#section-${sectionName}`).toggle();
+  }
+
   // Converts the given API type to an input type
   function getInputType(apiType) {
     switch (apiType) {
@@ -219,8 +228,8 @@ $(window).ready(() => {
     return metadataInputs;
   }
 
-  // Adds the given elements to the end of the form
-  function appendToForm(elements) {
+  // Adds the given elements to the beginning of the form
+  function prependElementsToForm(elements) {
     const form = $('#metadata-form');
 
     elements.forEach((element) => {
@@ -228,17 +237,39 @@ $(window).ready(() => {
     });
   }
 
+  // Adds the given element to the end of the form
+  function prependElementToForm(element) {
+    const form = $('#metadata-form');
+
+    form.prepend(element);
+  }
+
   function generateFormHtml(groupData) {
     const sections = [];
+    const checkboxDiv = $('<div class="metadata-checkboxes"><h1>Metadata Groups</h1></div>');
+    const defaultGroups = ['Generic'];
     groupData.forEach((group) => {
-      const sectionDiv = $(`<div class="section-${group.name}"><h1>${group.name}</h1></div>`);
+      // Add Section
+      const sectionDiv = $(`<div id="section-${group.name}"><h1>${group.name}</h1></div>`);
       const metadataInputs = generateMetadataInputs(group.fields);
       metadataInputs.forEach((htmlElement) => {
         $(htmlElement).appendTo(sectionDiv);
       });
       sections.unshift(sectionDiv);
+
+      // Add checkbox
+      const disabledText = defaultGroups.includes(group.name) ? 'disabled="disabled" checked="checked"' : '';
+
+      const groupCheckbox = $(`<label>
+                                <input ${disabledText} type="checkbox" 
+                                data-section-name="${group.name}" /> ${group.name}
+                              </label>`);
+      groupCheckbox.children('input').click(handleGroupClick);
+      groupCheckbox.appendTo(checkboxDiv);
     });
-    appendToForm(sections);
+
+    prependElementsToForm(sections);
+    prependElementToForm(checkboxDiv[0].childNodes);
   }
 
   function extractMetadataFields(groupData) {
