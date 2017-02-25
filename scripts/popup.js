@@ -38,7 +38,6 @@ $(window).ready(() => {
     reader.readAsDataURL(blob);
     reader.onloadend = () => {
       const base64data = reader.result;
-      // console.log(base64data);
 
       const documentData = {
         document: {
@@ -135,7 +134,7 @@ $(window).ready(() => {
     });
   }
 
-  chrome.extension.onMessageExternal.addListener((request, sender, sendResponse) => {
+  chrome.extension.onMessageExternal.addListener((request) => {
     let blob;
     const statusMessage = $('#status-message');
     const saveBtn = $('#save-page-btn');
@@ -178,9 +177,28 @@ $(window).ready(() => {
   /* endregion External Extension Section */
 
   /* region Get */
+  // Toggles section on click of metadata group checkbox
   function handleGroupClick() {
     const sectionName = $(this).data('section-name');
     $(`#section-${sectionName}`).toggle();
+  }
+
+  // Scrapes page and sets some metadata fields
+  function scrapePage() {
+    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+      const curTab = tabs[0];
+      const url = curTab.url;
+      const title = curTab.title;
+
+      const today = new Date();
+      const paddedMonth = (`0${today.getMonth() + 1}`).slice(-2);
+      const paddedDate = (`0${today.getDate()}`).slice(-2);
+      const dateAdded = `${today.getFullYear()}-${paddedMonth}-${paddedDate}`;
+
+      $('#title').val(title);
+      $('#date_added').val(dateAdded).prop('disabled', true);
+      $('#url').val(url).prop('disabled', true);
+    });
   }
 
   // Converts the given API type to an input type
@@ -206,7 +224,7 @@ $(window).ready(() => {
   function generateMetadataInput(metadataField) {
     return $('<input />',
       {
-        id: metadataField.id,
+        id: metadataField.id.split(' ').join('_'), // ID currently has spaces in it, which is no good for html ids
         name: metadataField.name,
         type: getInputType(metadataField.type),
       });
@@ -270,6 +288,7 @@ $(window).ready(() => {
 
     prependElementsToForm(sections);
     prependElementToForm(checkboxDiv[0].childNodes);
+    scrapePage();
   }
 
   function extractMetadataFields(groupData) {
