@@ -17,6 +17,12 @@ body *{
     margin-bottom: 10px;
 }
 
+h1{
+    font-size: 16px;
+    line-height: 20px;
+    margin: 5px 0;
+}
+
 label, input{
     width: 50%;
     display: inline-block;
@@ -25,7 +31,11 @@ label, input{
 }
 
 input[type="button"]{
-    margin: 0 auto;
+    margin: 10px auto 5px;
     display: block;
     text-transform: uppercase;
+}
+
+textarea {
+    width: 100%;
 }
