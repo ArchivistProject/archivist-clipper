@@ -5,7 +5,8 @@
       "jquery": true
   },
   "globals":{
-    "chrome" : false
+    "chrome" : false,
+    "Archivist" : true
   },
   "rules": {
     "default-case": 0,

@@ -1,8 +1,4 @@
 $(window).ready(() => {
-  const Archivist = {
-    metadataFields: [],
-  };
-
   /* region Post */
   function handlePostSuccess(data, status) {
     console.log(status);
@@ -120,7 +116,6 @@ $(window).ready(() => {
           statusMessage.html('This page can not be processed');
         }
       } else {
-        console.log('missing core');
         statusMessage.html('Missing core');
       }
     });
@@ -182,21 +177,40 @@ $(window).ready(() => {
     $(`#section-${sectionName}`).toggle();
   }
 
+  function applyCustomScrapedData(scrapeData) {
+    console.log(scrapeData);
+    const scrapeConfig = Archivist.getScrapperConfig(scrapeData.url);
+
+    Object.keys(scrapeData.fields).forEach((popupFieldId) => {
+      const curFieldOptions = scrapeConfig[popupFieldId];
+      const curFieldValue = scrapeData.fields[popupFieldId];
+      if (curFieldOptions.isCorrectFormat) {
+        $(`#${popupFieldId}`).val(curFieldValue);
+      } else {
+        console.log('formatted');
+        const formattedVal = curFieldOptions.dataFormatFunc(curFieldValue);
+        console.log(formattedVal);
+        $(`#${popupFieldId}`).val(formattedVal);
+      }
+    });
+  }
+
   // Scrapes page and sets some metadata fields
   function scrapePage() {
     chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
       const curTab = tabs[0];
-      const url = curTab.url;
-      const title = curTab.title;
 
-      const today = new Date();
-      const paddedMonth = (`0${today.getMonth() + 1}`).slice(-2);
-      const paddedDate = (`0${today.getDate()}`).slice(-2);
-      const dateAdded = `${today.getFullYear()}-${paddedMonth}-${paddedDate}`;
+      const dateAdded = Archivist.getInputDateFormat(new Date());
 
-      $('#generic-title').val(title);
-      $('#generic-date_added').val(dateAdded).prop('disabled', true);
-      $('#website-url').val(url).prop('disabled', true);
+      $('#generic_title').val(curTab.title);
+      $('#generic_date_added').val(dateAdded).prop('disabled', true);
+      $('#website_url').val(curTab.url).prop('disabled', true);
+
+      const config = Archivist.getScrapperConfig(curTab.url);
+
+      if (config !== null) {
+        chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields', scrape_config: config }, applyCustomScrapedData);
+      }
     });
   }
 
@@ -224,7 +238,7 @@ $(window).ready(() => {
     return $('<input />',
       {
         // ID currently has spaces in it, which is no good for html ids
-        id: `${groupName.toLowerCase()}-${metadataField.id.replace(/ /i, '_')}`,
+        id: `${groupName.toLowerCase()}_${metadataField.id.replace(/ /i, '_')}`,
         name: metadataField.name,
         type: getInputType(metadataField.type),
       });
