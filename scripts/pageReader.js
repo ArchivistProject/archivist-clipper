@@ -7,7 +7,8 @@ function scrapeFields(scrapeConfig, returnFunc) {
     const config = scrapeConfig[fieldId];
     metadataFieldValues[fieldId] = $(config.selector).html();
   });
-
+  console.log('scrapped field');
+  console.log(metadataFieldValues);
   returnFunc({
     url: this.window.location.href,
     fields: metadataFieldValues,

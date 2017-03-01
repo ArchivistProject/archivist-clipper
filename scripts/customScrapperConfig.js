@@ -25,6 +25,36 @@ Archivist.customScrappingConfig = {
       selector: '.authorName',
       isCorrectFormat: true,
     },
+    description: {
+      selector: '#abspara0010',
+      isCorrectFormat: true,
+    },
+    journal_name: {
+      selector: '.title a span',
+      isCorrectFormat: true,
+    },
+    journal_volume: {
+      selector: '.S_C_volIss',
+      isCorrectFormat: true,
+    },
+    journal_issue: {
+      selector: '.volIssue',
+      isCorrectFormat: false,
+      dataFormatFunc: (origValue) => {
+        return origValue.split(',')[1];
+      },
+    },
+    journal_pages: {
+      selector: '.volIssue',
+      isCorrectFormat: false,
+      dataFormatFunc: (origValue) => {
+        console.log(origValue);
+        console.log(origValue.split(','))
+        const pages = origValue.split(',')[2];
+        console.log(pages);
+        return pages;
+      },
+    },
   },
 };
 
