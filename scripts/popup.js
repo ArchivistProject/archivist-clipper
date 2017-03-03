@@ -187,9 +187,7 @@ $(window).ready(() => {
       if (curFieldOptions.dataFormatFunc === undefined) {
         $(`#${popupFieldId}`).val(curFieldValue);
       } else {
-        console.log('formatted');
         const formattedVal = curFieldOptions.dataFormatFunc(curFieldValue);
-        console.log(formattedVal);
         $(`#${popupFieldId}`).val(formattedVal);
       }
     });
