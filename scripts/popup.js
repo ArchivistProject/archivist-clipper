@@ -184,6 +184,13 @@ $(window).ready(() => {
     Object.keys(scrapeData.fields).forEach((popupFieldId) => {
       const curFieldOptions = scrapeConfig[popupFieldId];
       const curFieldValue = scrapeData.fields[popupFieldId];
+      const group = popupFieldId.split('_')[0];
+      const groupFields = $(`#section-${group}`);
+      if (!groupFields.is(':visible')) {
+        groupFields.toggle();
+        $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
+      }
+
       if (curFieldOptions.dataFormatFunc === undefined) {
         $(`#${popupFieldId}`).val(curFieldValue);
       } else {
