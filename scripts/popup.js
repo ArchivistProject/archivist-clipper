@@ -288,7 +288,12 @@ $(window).ready(() => {
       sections.unshift(sectionDiv);
 
       // Add checkbox
-      const disabledText = defaultGroups.includes(group.name) ? 'disabled="disabled" checked="checked"' : '';
+      var disabledText = '';
+      if (defaultGroups.includes(group.name)) {
+        disabledText = 'disabled="disabled" checked="checked"';
+      } else {
+        sectionDiv.toggle();
+      }
 
       const groupCheckbox = $(`<label>
                                 <input ${disabledText} type="checkbox"
