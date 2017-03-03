@@ -5,4 +5,8 @@ const Archivist = {
     const paddedDate = (`0${date.getDate()}`).slice(-2);
     return `${date.getFullYear()}-${paddedMonth}-${paddedDate}`;
   },
+
+  toHtmlObect: (text) => {
+    return $('<div>' + text + '</div>');
+  },
 };

@@ -21,7 +21,13 @@ Archivist.customScrappingConfig = {
       selector: '.authorName',
     },
     description: {
-      selector: '#abspara0010',
+      selector: '.abstract:not(.abstractHighlights)',
+      dataFormatFunc: (htmlText) => {
+        var block = Archivist.toHtmlObect(htmlText);
+        var innerP = block.find('p');
+        var abstract = innerP.length >= 1 ? innerP.text() : block.text();
+        return '# Abstract\n' + abstract;
+      },
     },
     journal_name: {
       selector: '.title a span',
@@ -39,7 +45,7 @@ Archivist.customScrappingConfig = {
       selector: '.volIssue',
       dataFormatFunc: (origValue) => {
         console.log(origValue);
-        console.log(origValue.split(','))
+        console.log(origValue.split(','));
         const pages = origValue.split(',')[2];
         console.log(pages);
         return pages;
