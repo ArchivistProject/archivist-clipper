@@ -184,7 +184,7 @@ $(window).ready(() => {
     Object.keys(scrapeData.fields).forEach((popupFieldId) => {
       const curFieldOptions = scrapeConfig[popupFieldId];
       const curFieldValue = scrapeData.fields[popupFieldId];
-      if (curFieldOptions.isCorrectFormat) {
+      if (curFieldOptions.dataFormatFunc === undefined) {
         $(`#${popupFieldId}`).val(curFieldValue);
       } else {
         console.log('formatted');
@@ -293,7 +293,7 @@ $(window).ready(() => {
       const disabledText = defaultGroups.includes(group.name) ? 'disabled="disabled" checked="checked"' : '';
 
       const groupCheckbox = $(`<label>
-                                <input ${disabledText} type="checkbox" 
+                                <input ${disabledText} type="checkbox"
                                 data-section-name="${group.name.toLowerCase()}" /> ${group.name}
                               </label>`);
       groupCheckbox.children('input').click(handleGroupClick);
