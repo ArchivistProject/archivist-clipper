@@ -200,23 +200,23 @@ $(window).ready(() => {
     });
   }
 
-  // Scrapes page and sets some metadata fields
-  function scrapePage() {
-    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-      const curTab = tabs[0];
+  // Sets some default fields (title, date added, url)
+  function setDefaultFields(curTab) {
+    const dateAdded = Archivist.getInputDateFormat(new Date());
 
-      const dateAdded = Archivist.getInputDateFormat(new Date());
+    $('#generic_title').val(curTab.title);
+    $('#generic_date_added').val(dateAdded).prop('disabled', true);
+    $('#website_url').val(curTab.url).prop('disabled', true);
+  }
 
-      $('#generic_title').val(curTab.title);
-      $('#generic_date_added').val(dateAdded).prop('disabled', true);
-      $('#website_url').val(curTab.url).prop('disabled', true);
+  // Sends message to pageReader.js to scrape custom fields for site
+  // Result is sent to applyCustomScrapedData
+  function initScrape(curTab) {
+    const config = Archivist.getScrapperConfig(curTab.url);
 
-      const config = Archivist.getScrapperConfig(curTab.url);
-
-      if (config !== null) {
-        chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields', scrape_config: config }, applyCustomScrapedData);
-      }
-    });
+    if (config !== null) {
+      chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields', scrape_config: config }, applyCustomScrapedData);
+    }
   }
 
   // Converts the given API type to an input type
@@ -295,7 +295,7 @@ $(window).ready(() => {
       sections.unshift(sectionDiv);
 
       // Add checkbox
-      var disabledText = '';
+      let disabledText = '';
       if (defaultGroups.includes(group.name)) {
         disabledText = 'disabled="disabled" checked="checked"';
       } else {
@@ -312,7 +312,13 @@ $(window).ready(() => {
 
     prependElementsToForm(sections);
     prependElementToForm(checkboxDiv[0].childNodes);
-    scrapePage();
+
+    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+      const curTab = tabs[0];
+
+      setDefaultFields(curTab);
+      initScrape(curTab);
+    });
   }
 
   function extractMetadataFields(groupData) {
