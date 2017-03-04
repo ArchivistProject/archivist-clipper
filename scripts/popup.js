@@ -192,6 +192,7 @@ $(window).ready(() => {
   function extractMetadataFields(groupData) {
     groupData.forEach((group) => {
       group.fields.forEach((field) => {
+        field.group = group.name;
         Archivist.metadataFields.push(field);
       });
     });
