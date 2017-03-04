@@ -1,14 +1,20 @@
 // From a given config object, scrape the page for values related to metadata fields
 // Key is field ID, Object is scrapping configuration options for that field
-function scrapeFields(scrapeConfig, returnFunc) {
+function scrapeFields(returnFunc) {
   const metadataFieldValues = {};
+  const scrapeConfig = Archivist.getScrapperConfig(window.location.href);
 
   Object.keys(scrapeConfig).forEach((fieldId) => {
-    const config = scrapeConfig[fieldId];
-    metadataFieldValues[fieldId] = $(config.selector).html();
+    const fieldConfig = scrapeConfig[fieldId];
+    let fieldValue = $(fieldConfig.selector).html();
+
+    if (fieldConfig.dataFormatFunc !== undefined) {
+      fieldValue = fieldConfig.dataFormatFunc(fieldValue);
+    }
+
+    metadataFieldValues[fieldId] = fieldValue;
   });
-  console.log('scrapped field');
-  console.log(metadataFieldValues);
+
   returnFunc({
     url: this.window.location.href,
     fields: metadataFieldValues,
@@ -18,6 +24,6 @@ function scrapeFields(scrapeConfig, returnFunc) {
 chrome.runtime.onMessage.addListener(
   (request, sender, sendResponse) => {
     if (request.action === 'scrape_fields') {
-      scrapeFields(request.scrape_config, sendResponse);
+      scrapeFields(sendResponse);
     }
   });

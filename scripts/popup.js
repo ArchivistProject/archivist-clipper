@@ -178,12 +178,7 @@ $(window).ready(() => {
   }
 
   function applyCustomScrapedData(scrapeData) {
-    console.log(scrapeData);
-    const scrapeConfig = Archivist.getScrapperConfig(scrapeData.url);
-
     Object.keys(scrapeData.fields).forEach((popupFieldId) => {
-      const curFieldOptions = scrapeConfig[popupFieldId];
-      const curFieldValue = scrapeData.fields[popupFieldId];
       const group = popupFieldId.split('_')[0];
       const groupFields = $(`#section-${group}`);
       if (!groupFields.is(':visible')) {
@@ -191,12 +186,8 @@ $(window).ready(() => {
         $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
       }
 
-      if (curFieldOptions.dataFormatFunc === undefined) {
-        $(`#${popupFieldId}`).val(curFieldValue);
-      } else {
-        const formattedVal = curFieldOptions.dataFormatFunc(curFieldValue);
-        $(`#${popupFieldId}`).val(formattedVal);
-      }
+      const curFieldValue = scrapeData.fields[popupFieldId];
+      $(`#${popupFieldId}`).val(curFieldValue);
     });
   }
 
@@ -212,11 +203,8 @@ $(window).ready(() => {
   // Sends message to pageReader.js to scrape custom fields for site
   // Result is sent to applyCustomScrapedData
   function initScrape(curTab) {
-    const config = Archivist.getScrapperConfig(curTab.url);
-
-    if (config !== null) {
-      chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields', scrape_config: config }, applyCustomScrapedData);
-    }
+   // const config = Archivist.getScrapperConfig(curTab.url);
+    chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, applyCustomScrapedData);
   }
 
   // Converts the given API type to an input type
