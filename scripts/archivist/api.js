@@ -2,7 +2,7 @@ Archivist.api = {};
 
 Archivist.api.getMetadataFieldGroups = (successHandler) => {
   $.ajax({
-    url: 'http://localhost:3000/system/groups',
+    url: 'http://localhost:3000/public/groups',
     type: 'GET',
     success: successHandler,
     contentType: 'application/json',
