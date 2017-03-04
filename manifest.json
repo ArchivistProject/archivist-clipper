@@ -6,6 +6,10 @@
     "tabs", "http://*/*", "https://*/*",
     "downloads","storage"
   ],
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "js":      ["scripts/jquery-3.1.1.min.js", "scripts/archivist/base.js", "scripts/archivist/customScrapperConfig.js", "scripts/pageReader.js"]
+  }],
   "browser_action": {
       "default_title": "Archive this page",
       "default_icon": "resources/icon_16.png",

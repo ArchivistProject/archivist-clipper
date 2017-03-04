@@ -1,8 +1,4 @@
 $(window).ready(() => {
-  const Archivist = {
-    metadataFields: [],
-  };
-
   /* region Post */
   function handlePostSuccess(data, status) {
     console.log(status);
@@ -31,7 +27,7 @@ $(window).ready(() => {
       field.data = formData[field.name];
     });
 
-    const tagsData = $('#tags').val().split(' ');
+    const tagsData = $('#tags').val();
     const descriptionData = $('#description').val();
 
     const reader = new window.FileReader();
@@ -42,94 +38,21 @@ $(window).ready(() => {
       const documentData = {
         document: {
           file: base64data,
-          tags: tagsData,
+          tags: tagsData === '' ? [] : tagsData.split(' '),
           description: descriptionData,
           metadata_fields: Archivist.metadataFields,
         },
       };
 
-      $.ajax({
-        url: 'http://localhost:3000/public/documents',
-        type: 'POST',
-        data: JSON.stringify(documentData),
-        success: handlePostSuccess,
-        contentType: 'application/json',
-        dataType: 'json',
-      });
+      Archivist.api.postDocumentData(documentData, handlePostSuccess);
     };
   }
   /* endregion Post */
 
-  /* region External Extension Section */
-  const extensionDetected = [];
-  const SINGLE_FILE_CORE_EXT_ID = 'jemlklgaibiijojffihnhieihhagocma';
-
-  function detectExtension(extensionId, callback) {
-    let img;
-    if (extensionDetected[extensionId]) {
-      callback(true);
-    } else {
-      img = new Image();
-      img.src = `chrome-extension://${extensionId}/resources/icon_16.png`;
-      img.onload = () => {
-        extensionDetected[extensionId] = true;
-        callback(true);
-      };
-      img.onerror = () => {
-        extensionDetected[extensionId] = false;
-        callback(false);
-      };
-    }
-  }
-
-  function getConfig() {
-    return localStorage.config ? JSON.parse(localStorage.config) : {
-      removeFrames: false,
-      removeScripts: true,
-      removeObjects: true,
-      removeHidden: false,
-      removeUnusedCSSRules: false,
-      processInBackground: true,
-      maxFrameSize: 2,
-      displayProcessedPage: false,
-      getContent: true,
-      getRawDoc: false,
-      displayInContextMenu: true,
-      sendToPageArchiver: false,
-      displayBanner: true,
-    };
-  }
-
-  function processable(url) {
-    return ((url.indexOf('http://') === 0 || url.indexOf('https://') === 0));
-  }
-
-  function invokeSinglePage(tabId, url, processSelection, processFrame) {
-    const statusMessage = $('#status-message');
-
-    detectExtension(SINGLE_FILE_CORE_EXT_ID, (detected) => {
-      if (detected) {
-        if (processable(url)) {
-          chrome.extension.sendMessage(SINGLE_FILE_CORE_EXT_ID, {
-            processSelection,
-            processFrame,
-            id: tabId,
-            config: getConfig(),
-          });
-        } else {
-          statusMessage.html('This page can not be processed');
-        }
-      } else {
-        console.log('missing core');
-        statusMessage.html('Missing core');
-      }
-    });
-  }
-
   function click() {
     chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
       const activeTab = tabs[0];
-      invokeSinglePage(activeTab.id, activeTab.url, false, false);
+      Archivist.singleFile.invokeSingleFile(activeTab.id, activeTab.url, false, false);
     });
   }
 
@@ -173,77 +96,41 @@ $(window).ready(() => {
       statusMessage.html('Error');
     }
   });
-  /* endregion External Extension Section */
 
-  /* region Get */
   // Toggles section on click of metadata group checkbox
   function handleGroupClick() {
     const sectionName = $(this).data('section-name');
     $(`#section-${sectionName}`).toggle();
   }
 
-  // Scrapes page and sets some metadata fields
-  function scrapePage() {
-    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-      const curTab = tabs[0];
-      const url = curTab.url;
-      const title = curTab.title;
+  function applyCustomScrapedData(scrapeData) {
+    Object.keys(scrapeData.fields).forEach((popupFieldId) => {
+      const group = popupFieldId.split('_')[0];
+      const groupFields = $(`#section-${group}`);
+      if (!groupFields.is(':visible')) {
+        groupFields.toggle();
+        $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
+      }
 
-      const today = new Date();
-      const paddedMonth = (`0${today.getMonth() + 1}`).slice(-2);
-      const paddedDate = (`0${today.getDate()}`).slice(-2);
-      const dateAdded = `${today.getFullYear()}-${paddedMonth}-${paddedDate}`;
-
-      $('#generic-title').val(title);
-      $('#generic-date_added').val(dateAdded).prop('disabled', true);
-      $('#website-url').val(url).prop('disabled', true);
+      const curFieldValue = scrapeData.fields[popupFieldId];
+      $(`#${popupFieldId}`).val(curFieldValue);
     });
   }
 
-  // Converts the given API type to an input type
-  function getInputType(apiType) {
-    switch (apiType) {
-      case 'string':
-        return 'text';
-      case 'date':
-        return 'date';
-      default:
-        return null;
-    }
+  // Sets some default fields (title, date added, url)
+  function setDefaultFields(curTab) {
+    const dateAdded = Archivist.getInputDateFormat(new Date());
+
+    $('#generic_title').val(curTab.title);
+    $('#generic_date_added').val(dateAdded).prop('disabled', true);
+    $('#website_url').val(curTab.url).prop('disabled', true);
   }
 
-  // Generates html for metadata field's label
-  function generateMetadataLabel(metadataField) {
-    return $(`<label>${metadataField.name}</label>`, {
-      htmlFor: metadataField.id,
-    });
-  }
-
-  // Generates html for metadata field's input field
-  function generateMetadataInput(metadataField, groupName) {
-    return $('<input />',
-      {
-        // ID currently has spaces in it, which is no good for html ids
-        id: `${groupName.toLowerCase()}-${metadataField.id.replace(/ /i, '_')}`,
-        name: metadataField.name,
-        type: getInputType(metadataField.type),
-      });
-  }
-
-  // Generates html for metadata field and returns as array
-  function generateMetadataInputs(metadataFields, groupName) {
-    const metadataInputs = [];
-    metadataFields.forEach((metadataField) => {
-      metadataField.id = metadataField.name.toLowerCase();
-
-      const container = $('<div class="metadata_item"></div>');
-      container.prepend(generateMetadataInput(metadataField, groupName));
-      container.prepend(generateMetadataLabel(metadataField));
-
-      metadataInputs.push(container);
-    });
-
-    return metadataInputs;
+  // Sends message to pageReader.js to scrape custom fields for site
+  // Result is sent to applyCustomScrapedData
+  function initScrape(curTab) {
+   // const config = Archivist.getScrapperConfig(curTab.url);
+    chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, applyCustomScrapedData);
   }
 
   // Adds the given elements to the beginning of the form
@@ -269,17 +156,22 @@ $(window).ready(() => {
     groupData.forEach((group) => {
       // Add Section
       const sectionDiv = $(`<div id="section-${group.name.toLowerCase()}"><h1>${group.name}</h1></div>`);
-      const metadataInputs = generateMetadataInputs(group.fields, group.name);
+      const metadataInputs = Archivist.html.generateMetadataInputs(group.fields, group.name);
       metadataInputs.forEach((htmlElement) => {
         $(htmlElement).appendTo(sectionDiv);
       });
       sections.unshift(sectionDiv);
 
       // Add checkbox
-      const disabledText = defaultGroups.includes(group.name) ? 'disabled="disabled" checked="checked"' : '';
+      let disabledText = '';
+      if (defaultGroups.includes(group.name)) {
+        disabledText = 'disabled="disabled" checked="checked"';
+      } else {
+        sectionDiv.toggle();
+      }
 
       const groupCheckbox = $(`<label>
-                                <input ${disabledText} type="checkbox" 
+                                <input ${disabledText} type="checkbox"
                                 data-section-name="${group.name.toLowerCase()}" /> ${group.name}
                               </label>`);
       groupCheckbox.children('input').click(handleGroupClick);
@@ -288,12 +180,19 @@ $(window).ready(() => {
 
     prependElementsToForm(sections);
     prependElementToForm(checkboxDiv[0].childNodes);
-    scrapePage();
+
+    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+      const curTab = tabs[0];
+
+      setDefaultFields(curTab);
+      initScrape(curTab);
+    });
   }
 
   function extractMetadataFields(groupData) {
     groupData.forEach((group) => {
       group.fields.forEach((field) => {
+        field.group = group.name;
         Archivist.metadataFields.push(field);
       });
     });
@@ -304,20 +203,9 @@ $(window).ready(() => {
     extractMetadataFields(data.groups);
   }
 
-  function getMetadataFieldGroups() {
-    $.ajax({
-      url: 'http://localhost:3000/system/groups',
-      type: 'GET',
-      success: handleMetadataGroupSuccess,
-      contentType: 'application/json',
-      dataType: 'json',
-    });
-  }
-  /* endregion Get */
-
   /* region Init */
   $('#save-page-btn').click(click);
 
-  getMetadataFieldGroups();
+  Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
   /* endregion Init */
 });
