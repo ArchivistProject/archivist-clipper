@@ -44,87 +44,15 @@ $(window).ready(() => {
         },
       };
 
-      $.ajax({
-        url: 'http://localhost:3000/public/documents',
-        type: 'POST',
-        data: JSON.stringify(documentData),
-        success: handlePostSuccess,
-        contentType: 'application/json',
-        dataType: 'json',
-      });
+      Archivist.api.postDocumentData(documentData, handlePostSuccess);
     };
   }
   /* endregion Post */
 
-  /* region External Extension Section */
-  const extensionDetected = [];
-  const SINGLE_FILE_CORE_EXT_ID = 'jemlklgaibiijojffihnhieihhagocma';
-
-  function detectExtension(extensionId, callback) {
-    let img;
-    if (extensionDetected[extensionId]) {
-      callback(true);
-    } else {
-      img = new Image();
-      img.src = `chrome-extension://${extensionId}/resources/icon_16.png`;
-      img.onload = () => {
-        extensionDetected[extensionId] = true;
-        callback(true);
-      };
-      img.onerror = () => {
-        extensionDetected[extensionId] = false;
-        callback(false);
-      };
-    }
-  }
-
-  function getConfig() {
-    return localStorage.config ? JSON.parse(localStorage.config) : {
-      removeFrames: false,
-      removeScripts: true,
-      removeObjects: true,
-      removeHidden: false,
-      removeUnusedCSSRules: false,
-      processInBackground: true,
-      maxFrameSize: 2,
-      displayProcessedPage: false,
-      getContent: true,
-      getRawDoc: false,
-      displayInContextMenu: true,
-      sendToPageArchiver: false,
-      displayBanner: true,
-    };
-  }
-
-  function processable(url) {
-    return ((url.indexOf('http://') === 0 || url.indexOf('https://') === 0));
-  }
-
-  function invokeSinglePage(tabId, url, processSelection, processFrame) {
-    const statusMessage = $('#status-message');
-
-    detectExtension(SINGLE_FILE_CORE_EXT_ID, (detected) => {
-      if (detected) {
-        if (processable(url)) {
-          chrome.extension.sendMessage(SINGLE_FILE_CORE_EXT_ID, {
-            processSelection,
-            processFrame,
-            id: tabId,
-            config: getConfig(),
-          });
-        } else {
-          statusMessage.html('This page can not be processed');
-        }
-      } else {
-        statusMessage.html('Missing core');
-      }
-    });
-  }
-
   function click() {
     chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
       const activeTab = tabs[0];
-      invokeSinglePage(activeTab.id, activeTab.url, false, false);
+      Archivist.singleFile.invokeSingleFile(activeTab.id, activeTab.url, false, false);
     });
   }
 
@@ -168,9 +96,7 @@ $(window).ready(() => {
       statusMessage.html('Error');
     }
   });
-  /* endregion External Extension Section */
 
-  /* region Get */
   // Toggles section on click of metadata group checkbox
   function handleGroupClick() {
     const sectionName = $(this).data('section-name');
@@ -207,52 +133,6 @@ $(window).ready(() => {
     chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, applyCustomScrapedData);
   }
 
-  // Converts the given API type to an input type
-  function getInputType(apiType) {
-    switch (apiType) {
-      case 'string':
-        return 'text';
-      case 'date':
-        return 'date';
-      default:
-        return null;
-    }
-  }
-
-  // Generates html for metadata field's label
-  function generateMetadataLabel(metadataField) {
-    return $(`<label>${metadataField.name}</label>`, {
-      htmlFor: metadataField.id,
-    });
-  }
-
-  // Generates html for metadata field's input field
-  function generateMetadataInput(metadataField, groupName) {
-    return $('<input />',
-      {
-        // ID currently has spaces in it, which is no good for html ids
-        id: `${groupName.toLowerCase()}_${metadataField.id.replace(/ /i, '_')}`,
-        name: metadataField.name,
-        type: getInputType(metadataField.type),
-      });
-  }
-
-  // Generates html for metadata field and returns as array
-  function generateMetadataInputs(metadataFields, groupName) {
-    const metadataInputs = [];
-    metadataFields.forEach((metadataField) => {
-      metadataField.id = metadataField.name.toLowerCase();
-
-      const container = $('<div class="metadata_item"></div>');
-      container.prepend(generateMetadataInput(metadataField, groupName));
-      container.prepend(generateMetadataLabel(metadataField));
-
-      metadataInputs.push(container);
-    });
-
-    return metadataInputs;
-  }
-
   // Adds the given elements to the beginning of the form
   function prependElementsToForm(elements) {
     const form = $('#metadata-form');
@@ -276,7 +156,7 @@ $(window).ready(() => {
     groupData.forEach((group) => {
       // Add Section
       const sectionDiv = $(`<div id="section-${group.name.toLowerCase()}"><h1>${group.name}</h1></div>`);
-      const metadataInputs = generateMetadataInputs(group.fields, group.name);
+      const metadataInputs = Archivist.html.generateMetadataInputs(group.fields, group.name);
       metadataInputs.forEach((htmlElement) => {
         $(htmlElement).appendTo(sectionDiv);
       });
@@ -322,20 +202,9 @@ $(window).ready(() => {
     extractMetadataFields(data.groups);
   }
 
-  function getMetadataFieldGroups() {
-    $.ajax({
-      url: 'http://localhost:3000/system/groups',
-      type: 'GET',
-      success: handleMetadataGroupSuccess,
-      contentType: 'application/json',
-      dataType: 'json',
-    });
-  }
-  /* endregion Get */
-
   /* region Init */
   $('#save-page-btn').click(click);
 
-  getMetadataFieldGroups();
+  Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
   /* endregion Init */
 });
