@@ -27,7 +27,7 @@ $(window).ready(() => {
       field.data = formData[field.name];
     });
 
-    const tagsData = $('#tags').val().split(' ');
+    const tagsData = $('#tags').val();
     const descriptionData = $('#description').val();
 
     const reader = new window.FileReader();
@@ -38,7 +38,7 @@ $(window).ready(() => {
       const documentData = {
         document: {
           file: base64data,
-          tags: tagsData,
+          tags: tagsData === '' ? [] : tagsData.split(' '),
           description: descriptionData,
           metadata_fields: Archivist.metadataFields,
         },
