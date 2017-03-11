@@ -52,10 +52,10 @@ Archivist.singleFile.invokeSingleFile = (tabId, url, processSelection, processFr
           config: Archivist.singleFile.getConfig(),
         });
       } else {
-        statusMessage.html('This page can not be processed');
+        Archivist.popup.setStatusMessage('This page can not be processed');
       }
     } else {
-      statusMessage.html('Missing core');
+      Archivist.popup.setStatusMessage('Missing core');
     }
   });
 };
