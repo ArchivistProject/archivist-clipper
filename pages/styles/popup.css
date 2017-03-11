@@ -39,3 +39,12 @@ input[type="button"]{
 textarea {
     width: 100%;
 }
+
+#status-message {
+    padding: 15px 10px;
+    width: 100%;
+    background: rgba(0, 255, 243, 0.2);
+    box-shadow: 3px 3px 5px rgba(50,50,50,0.2);
+    transition: margin-left .75s ease-in-out;
+    margin-left: 110%;
+}
