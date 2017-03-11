@@ -82,8 +82,11 @@ $(window).ready(() => {
           processEnd: true,
         });
       }
-
-      blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), request.content], {
+    //  console.log(request.content);
+      //
+      var safeHtml = Archivist.fixes.makeSafe(request.content);
+    //  console.log("safe:",safeHtml);
+      blob = new Blob([(new Uint8Array([0xEF, 0xBB, 0xBF])), safeHtml], {
         type: 'text/html',
       });
 
