@@ -1,8 +1,10 @@
+Archivist.popup = {};
+
 $(window).ready(() => {
   const saveBtn = $('#save-page-btn');
   const statusMessage = $('#status-message');
 
-  function setStatusMessage(newMsg, animation, delay) {
+  Archivist.popup.setStatusMessage = (newMsg, animation, delay) => {
     let animationDelay = 0;
     if (delay != null) {
       animationDelay = delay;
@@ -23,13 +25,13 @@ $(window).ready(() => {
       }
     }, animationDelay);
 
-    statusMessage.text(newMsg);
-  }
+    statusMessage.children('.content').text(newMsg);
+  };
 
   /* region Post */
   function handlePostSuccess(data, status) {
     if (status === 'success') {
-      setStatusMessage('Saved to Archivist', 'slide-out', 3000);
+      Archivist.popup.setStatusMessage('Saved to Archivist', 'slide-out', 3000);
       saveBtn.val('Saved');
     }
   }
@@ -73,7 +75,7 @@ $(window).ready(() => {
         },
       };
 
-      setStatusMessage('Saving to Archivist');
+      Archivist.popup.setStatusMessage('Saving to Archivist');
       Archivist.api.postDocumentData(documentData, handlePostSuccess);
     };
   }
@@ -82,7 +84,7 @@ $(window).ready(() => {
   function click() {
     chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
       const activeTab = tabs[0];
-      setStatusMessage('Initializing HTML processing', 'slide-in');
+      Archivist.popup.setStatusMessage('Initializing HTML processing', 'slide-in');
       Archivist.singleFile.invokeSingleFile(activeTab.id, activeTab.url, false, false);
     });
   }
@@ -100,7 +102,7 @@ $(window).ready(() => {
 
     if (request.processProgress) {
       saveBtn.val('Saving...').prop('disabled', true);
-      setStatusMessage(`Processing HTML:  ${(request.index / request.maxIndex) * 100}%`);
+      Archivist.popup.setStatusMessage(`Processing HTML:  ${(request.index / request.maxIndex) * 100}%`);
     }
 
     if (request.processEnd) {
@@ -119,7 +121,7 @@ $(window).ready(() => {
 
     if (request.processError) {
       console.log(request);
-      setStatusMessage('Error');
+      Archivist.popup.setStatusMessage('Error');
     }
   });
 

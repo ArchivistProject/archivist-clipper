@@ -40,11 +40,31 @@ textarea {
     width: 100%;
 }
 
+#metadata-form {
+    position: relative;
+    padding-bottom: 10px;
+}
+
 #status-message {
-    padding: 15px 10px;
     width: 100%;
-    background: rgba(0, 255, 243, 0.2);
     box-shadow: 3px 3px 5px rgba(50,50,50,0.2);
     transition: margin-left .75s ease-in-out;
     margin-left: 110%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -5px;
+}
+#status-message div:first-child {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: white;
+}
+#status-message div.content {
+    position: relative;
+    padding: 15px 10px;
+    background: rgba(0, 255, 243, 0.2);
 }
