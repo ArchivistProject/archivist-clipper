@@ -1,8 +1,39 @@
+Archivist.popup = {};
+
 $(window).ready(() => {
+  const saveBtn = $('#save-page-btn');
+  const statusMessage = $('#status-message');
+
+  Archivist.popup.setStatusMessage = (newMsg, animation, delay) => {
+    let animationDelay = 0;
+    if (delay != null) {
+      animationDelay = delay;
+    }
+
+    setTimeout(() => {
+      switch (animation) {
+        case 'slide-in' :
+          statusMessage.css('opacity', 1).css('margin-left', '0%');
+          break;
+        case 'slide-out' :
+          statusMessage.css('margin-left', '-110%');
+
+          setTimeout(() => {
+            statusMessage.css('opacity', 0);
+            statusMessage.css('margin-left', '110%');
+          }, 500);
+      }
+    }, animationDelay);
+
+    statusMessage.children('.content').text(newMsg);
+  };
+
   /* region Post */
   function handlePostSuccess(data, status) {
-    console.log(status);
-    console.log(data);
+    if (status === 'success') {
+      Archivist.popup.setStatusMessage('Saved to Archivist', 'slide-out', 3000);
+      saveBtn.val('Saved');
+    }
   }
 
   function getFormData() {
@@ -44,6 +75,7 @@ $(window).ready(() => {
         },
       };
 
+      Archivist.popup.setStatusMessage('Saving to Archivist');
       Archivist.api.postDocumentData(documentData, handlePostSuccess);
     };
   }
@@ -52,18 +84,15 @@ $(window).ready(() => {
   function click() {
     chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
       const activeTab = tabs[0];
+      Archivist.popup.setStatusMessage('Initializing HTML processing', 'slide-in');
       Archivist.singleFile.invokeSingleFile(activeTab.id, activeTab.url, false, false);
     });
   }
 
   chrome.extension.onMessageExternal.addListener((request) => {
     let blob;
-    const statusMessage = $('#status-message');
-    const saveBtn = $('#save-page-btn');
 
     if (request.processStart) {
-      statusMessage.html('Initializing...');
-
       if (request.blockingProcess) {
         chrome.tabs.sendMessage(request.tabId, {
           processStart: true,
@@ -73,7 +102,7 @@ $(window).ready(() => {
 
     if (request.processProgress) {
       saveBtn.val('Saving...').prop('disabled', true);
-      statusMessage.html(`Completion Percent:  ${(request.index / request.maxIndex) * 100}%`);
+      Archivist.popup.setStatusMessage(`Processing HTML:  ${(request.index / request.maxIndex) * 100}%`);
     }
 
     if (request.processEnd) {
@@ -88,12 +117,11 @@ $(window).ready(() => {
       });
 
       postDataToApi(blob);
-      saveBtn.val('Saved');
     }
 
     if (request.processError) {
       console.log(request);
-      statusMessage.html('Error');
+      Archivist.popup.setStatusMessage('Error');
     }
   });
 
@@ -104,17 +132,19 @@ $(window).ready(() => {
   }
 
   function applyCustomScrapedData(scrapeData) {
-    Object.keys(scrapeData.fields).forEach((popupFieldId) => {
-      const group = popupFieldId.split('_')[0];
-      const groupFields = $(`#section-${group}`);
-      if (!groupFields.is(':visible')) {
-        groupFields.toggle();
-        $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
-      }
+    if (scrapeData != null) {
+      Object.keys(scrapeData.fields).forEach((popupFieldId) => {
+        const group = popupFieldId.split('_')[0];
+        const groupFields = $(`#section-${group}`);
+        if (!groupFields.is(':visible')) {
+          groupFields.toggle();
+          $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
+        }
 
-      const curFieldValue = scrapeData.fields[popupFieldId];
-      $(`#${popupFieldId}`).val(curFieldValue);
-    });
+        const curFieldValue = scrapeData.fields[popupFieldId];
+        $(`#${popupFieldId}`).val(curFieldValue);
+      });
+    }
   }
 
   // Sets some default fields (title, date added, url)
@@ -204,7 +234,7 @@ $(window).ready(() => {
   }
 
   /* region Init */
-  $('#save-page-btn').click(click);
+  saveBtn.click(click);
 
   Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
   /* endregion Init */
