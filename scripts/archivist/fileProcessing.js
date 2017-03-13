@@ -1,23 +1,5 @@
-//convert to html object
-//get rid of stuff
-//convert to string
+
 Archivist.fixes = {};
-
-// Archivist.fixes.makeSafe = function(input){
-//   var htmlObject = $(input);
-//
-//   var div = document.createElement('div');
-//   div.innerHTML = htmlObject;
-//   var scripts = div.getElementsByTagName('script');
-//   var i = scripts.length;
-//   while (i--) {
-//     scripts[i].parentNode.removeChild(scripts[i]);
-//   }
-//   console.log("new html:"", div.innerHTML);
-//
-//
-// };
-
 Archivist.fixes.makeSafe = (input) => {
   var temp = noScript(input);
   temp = noEvent(temp);
@@ -110,21 +92,7 @@ function noEvent(strCode){
   for(i=0;i<eventsList.length;i++){
     html.find('*').removeAttr(eventsList[i]);
   }
-  //
-  // html.find('*').removeAttr('ondblclick');
-  // html.find('*').removeAttr('oncontextmenu');
-  // html.find('*').removeAttr('onmousedown');
-  // html.find('*').removeAttr('onmouseenter');
-  // html.find('*').removeAttr('onmouseleave');
-  // html.find('*').removeAttr('onmousemove');
-  // html.find('*').removeAttr('onmouseover');
-  // html.find('*').removeAttr('onmouseout');
-  // html.find('*').removeAttr('onmouseup');
-  // html.find('*').removeAttr('onkeydown');
-  // html.find('*').removeAttr('onclick');
-  // html.find('*').removeAttr('onclick');
-  // html.find('*').removeAttr('onclick');
-  // html.find('*').removeAttr('onclick');
+
 
   return html.html();
 }
