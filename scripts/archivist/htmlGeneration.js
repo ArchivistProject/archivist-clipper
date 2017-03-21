@@ -9,6 +9,8 @@ Archivist.html.util.getInputType = (apiType) => {
       return 'text';
     case 'date':
       return 'date';
+    case 'url':
+      return 'text';
     default:
       return null;
   }
