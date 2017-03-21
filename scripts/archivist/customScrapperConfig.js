@@ -1,4 +1,26 @@
 Archivist.customScrappingConfig = {
+  Apple_Developer: {
+    tags: {
+      selector: '',
+      dataFormatFunc: () => 'apple programming',
+    },
+    generic_author: {
+      selector: '',
+      dataFormatFunc: () => 'Apple Inc.',
+    },
+    generic_date_published: {
+      selector: 'p.copyright',
+      dataFormatFunc: (htmlValue) => {
+        const date = htmlValue.match(/[1-2][9,0][0-9][0-9]-[0,1][0-9]-[0-3][0-9]/);
+
+        if (date) {
+          return date[0];
+        }
+
+        return '';
+      },
+    },
+  },
   Ars_Technica: {
     generic_author: {
       selector: '.byline a[rel="author"] span',
@@ -50,15 +72,32 @@ Archivist.customScrappingConfig = {
       },
     },
   },
+  TutorialsPoint_Swift: {
+    tags: {
+      selector: '',
+      dataFormatFunc: () => 'programming swift',
+    },
+    generic_author: {
+      selector: '',
+      dataFormatFunc: () => 'Tutorials Point',
+    },
+  },
 };
 
 // Given a url, determine the custom scrapper config object to use if any
 Archivist.getScrapperConfig = (url) => {
+  if (/developer.apple.com\/library\/.*\/?content/.test(url)) {
+    return Archivist.customScrappingConfig.Apple_Developer;
+  }
+
   if (/arstechnica.com\/.*\/[1,2][9,0][0-9]{2}/.test(url)) {
     return Archivist.customScrappingConfig.Ars_Technica;
   }
   if (/idea.library.drexel.edu/.test(url)) {
     return Archivist.customScrappingConfig.Idea_Library_Drexel;
+  }
+  if (/tutorialspoint.com\/swift/.test(url)) {
+    return Archivist.customScrappingConfig.TutorialsPoint_Swift;
   }
   if (/sciencedirect.com\/.*\/article/.test(url)) {
     return Archivist.customScrappingConfig.ScienceDirect;
