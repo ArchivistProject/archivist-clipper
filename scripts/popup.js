@@ -1,6 +1,6 @@
 Archivist.popup = {};
 
-$(window).ready(() => {
+$(document).ready(() => {
   const saveBtn = $('#save-page-btn');
   const statusMessage = $('#status-message');
 
@@ -33,7 +33,17 @@ $(window).ready(() => {
     if (status === 'success') {
       Archivist.popup.setStatusMessage('Saved to Archivist', 'slide-out', 3000);
       saveBtn.val('Saved');
+
+      chrome.storage.local.remove(Archivist.urlHash.toString(), () => {
+        if (chrome.runtime.lastError != null) {
+          console.log('error deleting key');
+          console.log(chrome.runtime.lastError);
+        } else {
+          console.log('success deleting key');
+        }
+      });
     }
+
   }
 
   function getFormData() {
@@ -131,9 +141,10 @@ $(window).ready(() => {
     $(`#section-${sectionName}`).toggle();
   }
 
-  function applyCustomScrapedData(scrapeData) {
-    if (scrapeData != null) {
-      Object.keys(scrapeData.fields).forEach((popupFieldId) => {
+  Archivist.popup.fillFormWithObject = (formData) => {
+    console.log(formData);
+    if (formData !== undefined) {
+      Object.keys(formData.fields).forEach((popupFieldId) => {
         const group = popupFieldId.split('_')[0];
         const groupFields = $(`#section-${group}`);
         if (!groupFields.is(':visible')) {
@@ -141,7 +152,7 @@ $(window).ready(() => {
           $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
         }
 
-        const curFieldValue = scrapeData.fields[popupFieldId];
+        const curFieldValue = formData.fields[popupFieldId];
         $(`#${popupFieldId}`).val(curFieldValue);
       });
     }
@@ -156,11 +167,26 @@ $(window).ready(() => {
     $('#website_url').val(curTab.url).prop('disabled', true);
   }
 
+  function checkSyncData() {
+    chrome.storage.local.get(null, (savedItems) => {
+      console.log(savedItems);
+      if (savedItems[Archivist.urlHash] != null) {
+        Archivist.form.tabFormValues[Archivist.urlHash] = savedItems[Archivist.urlHash];
+        Archivist.popup.fillFormWithObject(savedItems[Archivist.urlHash]);
+      }
+    });
+  }
+
+  function handleScrapeData(scrapeData) {
+    Archivist.popup.fillFormWithObject(scrapeData);
+    checkSyncData();
+  }
+
   // Sends message to pageReader.js to scrape custom fields for site
-  // Result is sent to applyCustomScrapedData
+  // Result is sent to Archivist.popup.fillFormWithObject
   function initScrape(curTab) {
    // const config = Archivist.getScrapperConfig(curTab.url);
-    chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, applyCustomScrapedData);
+    chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, handleScrapeData);
   }
 
   // Adds the given elements to the beginning of the form
@@ -216,6 +242,7 @@ $(window).ready(() => {
 
       setDefaultFields(curTab);
       initScrape(curTab);
+      Archivist.form.setInputEvents();
     });
   }
 
@@ -237,5 +264,14 @@ $(window).ready(() => {
   saveBtn.click(click);
 
   Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
+
+  chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+    const curTab = tabs[0];
+    Archivist.curTabID = curTab.id;
+    Archivist.curUrl = curTab.url;
+    Archivist.urlHash = curTab.url.hashCode();
+
+    console.log(Archivist.curTabID);
+  });
   /* endregion Init */
 });
