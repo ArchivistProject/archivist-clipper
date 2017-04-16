@@ -145,7 +145,7 @@ $(document).ready(() => {
         $(`#${popupFieldId}`).val(curFieldValue);
       });
     }
-  }
+  };
 
   // Sets some default fields (title, date added, url)
   function setDefaultFields(curTab) {
@@ -234,7 +234,7 @@ $(document).ready(() => {
 
   chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
     Archivist.curTab = tabs[0];
-    Archivist.urlHash = Archivist.curTab.url.hashCode();
+    Archivist.urlHash = Archivist.curTab.url.genHashCode();
 
     Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
   });

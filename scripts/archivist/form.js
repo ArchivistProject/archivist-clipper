@@ -25,14 +25,14 @@ Archivist.form.setInputEvents = () => {
       const changedElement = event.target;
       saveField(changedElement);
     });
-}
+};
 
 // Adds the given element to the end of the form
 Archivist.form.prependElement = (element) => {
   const form = $('#metadata-form');
 
   form.prepend(element);
-}
+};
 
 Archivist.form.getFormData = () => {
   const formElements = $('.metadata_item input');
@@ -46,7 +46,7 @@ Archivist.form.getFormData = () => {
   });
 
   return formData;
-}
+};
 
 // Adds the given elements to the beginning of the form
 Archivist.form.prependElements = (elements) => {
@@ -55,4 +55,4 @@ Archivist.form.prependElements = (elements) => {
   elements.forEach((element) => {
     form.prepend(element);
   });
-}
+};

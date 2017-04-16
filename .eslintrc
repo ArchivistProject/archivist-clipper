@@ -12,6 +12,8 @@
     "default-case": 0,
     "quotes": [2, "single"],
     "semi": [2, "always"],
+    /* eslint no-bitwise: ["error", { "allow": ["~"] }] */
+    "no-bitwise": ["error", { "allow": ["<<","|="]}],
     "no-unused-vars": [1, {"vars": "all", "args": "none"}],
     "no-console": 0,
     "no-param-reassign": [2,{
