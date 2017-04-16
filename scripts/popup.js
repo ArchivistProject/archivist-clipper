@@ -28,40 +28,29 @@ $(document).ready(() => {
     statusMessage.children('.content').text(newMsg);
   };
 
+  function removeLocalTabData() {
+    chrome.storage.local.remove(Archivist.urlHash.toString(), () => {
+      if (chrome.runtime.lastError != null) {
+        console.log('error deleting key');
+        console.log(chrome.runtime.lastError);
+      } else {
+        console.log('success deleting key');
+      }
+    });
+  }
+
   /* region Post */
   function handlePostSuccess(data, status) {
     if (status === 'success') {
       Archivist.popup.setStatusMessage('Saved to Archivist', 'slide-out', 3000);
       saveBtn.val('Saved');
 
-      chrome.storage.local.remove(Archivist.urlHash.toString(), () => {
-        if (chrome.runtime.lastError != null) {
-          console.log('error deleting key');
-          console.log(chrome.runtime.lastError);
-        } else {
-          console.log('success deleting key');
-        }
-      });
+      removeLocalTabData();
     }
-
-  }
-
-  function getFormData() {
-    const formElements = $('.metadata_item input');
-
-    const formData = {};
-    // create object with name, type, value, group=generic
-
-    formElements.each((element) => {
-      const curElement = formElements[element];
-      formData[curElement.getAttribute('name')] = curElement.value;
-    });
-
-    return formData;
   }
 
   function postDataToApi(blob) {
-    const formData = getFormData();
+    const formData = Archivist.form.getFormData();
 
     // loop through each metadataField, add the value from form data to expected API format
     Archivist.metadataFields.forEach((field) => {
@@ -167,7 +156,7 @@ $(document).ready(() => {
     $('#website_url').val(curTab.url).prop('disabled', true);
   }
 
-  function checkSyncData() {
+  function checkLocalData() {
     chrome.storage.local.get(null, (savedItems) => {
       console.log(savedItems);
       if (savedItems[Archivist.urlHash] != null) {
@@ -179,30 +168,14 @@ $(document).ready(() => {
 
   function handleScrapeData(scrapeData) {
     Archivist.popup.fillFormWithObject(scrapeData);
-    checkSyncData();
+    checkLocalData();
   }
 
   // Sends message to pageReader.js to scrape custom fields for site
   // Result is sent to Archivist.popup.fillFormWithObject
-  function initScrape(curTab) {
+  function initScrape() {
    // const config = Archivist.getScrapperConfig(curTab.url);
-    chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, handleScrapeData);
-  }
-
-  // Adds the given elements to the beginning of the form
-  function prependElementsToForm(elements) {
-    const form = $('#metadata-form');
-
-    elements.forEach((element) => {
-      form.prepend(element);
-    });
-  }
-
-  // Adds the given element to the end of the form
-  function prependElementToForm(element) {
-    const form = $('#metadata-form');
-
-    form.prepend(element);
+    chrome.tabs.sendMessage(Archivist.curTab.id, { action: 'scrape_fields' }, handleScrapeData);
   }
 
   function generateFormHtml(groupData) {
@@ -234,16 +207,12 @@ $(document).ready(() => {
       groupCheckbox.appendTo(checkboxDiv);
     });
 
-    prependElementsToForm(sections);
-    prependElementToForm(checkboxDiv[0].childNodes);
-
-    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-      const curTab = tabs[0];
-
-      setDefaultFields(curTab);
-      initScrape(curTab);
-      Archivist.form.setInputEvents();
-    });
+    Archivist.form.prependElements(sections);
+    Archivist.form.prependElement(checkboxDiv[0].childNodes);
+    console.log(Archivist.curTab);
+    setDefaultFields(Archivist.curTab);
+    initScrape();
+    Archivist.form.setInputEvents();
   }
 
   function extractMetadataFields(groupData) {
@@ -263,15 +232,11 @@ $(document).ready(() => {
   /* region Init */
   saveBtn.click(click);
 
-  Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
-
   chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-    const curTab = tabs[0];
-    Archivist.curTabID = curTab.id;
-    Archivist.curUrl = curTab.url;
-    Archivist.urlHash = curTab.url.hashCode();
+    Archivist.curTab = tabs[0];
+    Archivist.urlHash = Archivist.curTab.url.hashCode();
 
-    console.log(Archivist.curTabID);
+    Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
   });
   /* endregion Init */
 });
