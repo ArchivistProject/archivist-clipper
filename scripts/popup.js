@@ -234,7 +234,7 @@ $(document).ready(() => {
 
   chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
     Archivist.curTab = tabs[0];
-    Archivist.urlHash = Archivist.curTab.url.genHashCode();
+    Archivist.urlHash = Archivist.genHashCode(Archivist.curTab.url);
 
     Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
   });
