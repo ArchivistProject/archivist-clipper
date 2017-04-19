@@ -1,6 +1,7 @@
 $(document).ready(() => {
   // Saves options to chrome.storage.sync.
   const apiKey = $('#api_key');
+  const apiLocation = $('#api_location');
 
   function getFormData() {
     const formElements = $('.setting_item input');
@@ -29,15 +30,16 @@ $(document).ready(() => {
     return false;
   }
 
-// Restores select box and checkbox state using the preferences
-// stored in chrome.storage.
+  // Restores select box and checkbox state using the preferences
+  // stored in chrome.storage.
   function restoreOptions() {
     // Use default value color = 'red' and likesColor = true.
-    const defaults = { api_key: 'NULL' };
+    const defaults = { api_key: 'NULL', api_location: 'http://localhost:3000' };
 
     chrome.storage.sync.get(defaults, (items) => {
       console.log(items);
       apiKey.val(items.api_key);
+      apiLocation.val(items.api_location);
     });
   }
 
