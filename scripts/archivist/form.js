@@ -11,7 +11,7 @@ function addSavedFormInput(elementId, elementVal) {
   Archivist.form.tabFormValues[Archivist.urlHash].fields[elementId] = elementVal;
 
   chrome.storage.local.set({ [Archivist.urlHash]: Archivist.form.tabFormValues[Archivist.urlHash] }, () => {
-    console.log('Settings saved');
+    // Handle save success here
   });
 }
 

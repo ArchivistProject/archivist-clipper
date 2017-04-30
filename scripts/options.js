@@ -36,7 +36,6 @@ $(document).ready(() => {
     const defaults = { api_key: 'NULL' };
 
     chrome.storage.sync.get(defaults, (items) => {
-      console.log(items);
       apiKey.val(items.api_key);
     });
   }

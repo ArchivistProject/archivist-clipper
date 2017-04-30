@@ -31,10 +31,7 @@ $(document).ready(() => {
   function removeLocalTabData() {
     chrome.storage.local.remove(Archivist.urlHash.toString(), () => {
       if (chrome.runtime.lastError != null) {
-        console.log('error deleting key');
-        console.log(chrome.runtime.lastError);
-      } else {
-        console.log('success deleting key');
+        // Handle tab data removal failure
       }
     });
   }
@@ -119,7 +116,6 @@ $(document).ready(() => {
     }
 
     if (request.processError) {
-      console.log(request);
       Archivist.popup.setStatusMessage('Error');
     }
   });
@@ -131,7 +127,6 @@ $(document).ready(() => {
   }
 
   Archivist.popup.fillFormWithObject = (formData) => {
-    console.log(formData);
     if (formData !== undefined) {
       Object.keys(formData.fields).forEach((popupFieldId) => {
         const group = popupFieldId.split('_')[0];
@@ -158,7 +153,6 @@ $(document).ready(() => {
 
   function checkLocalData() {
     chrome.storage.local.get(null, (savedItems) => {
-      console.log(savedItems);
       if (savedItems[Archivist.urlHash] != null) {
         Archivist.form.tabFormValues[Archivist.urlHash] = savedItems[Archivist.urlHash];
         Archivist.popup.fillFormWithObject(savedItems[Archivist.urlHash]);
@@ -209,7 +203,7 @@ $(document).ready(() => {
 
     Archivist.form.prependElements(sections);
     Archivist.form.prependElement(checkboxDiv[0].childNodes);
-    console.log(Archivist.curTab);
+
     setDefaultFields(Archivist.curTab);
     initScrape();
     Archivist.form.setInputEvents();
