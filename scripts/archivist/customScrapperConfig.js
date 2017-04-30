@@ -42,10 +42,7 @@ Archivist.customScrappingConfig = {
     journal_pages: {
       selector: '.volIssue',
       dataFormatFunc: (origValue) => {
-        console.log(origValue);
-        console.log(origValue.split(','));
         const pages = origValue.split(',')[2];
-        console.log(pages);
         return pages;
       },
     },

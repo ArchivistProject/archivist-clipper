@@ -37,7 +37,6 @@ $(document).ready(() => {
     const defaults = { api_key: 'NULL', api_location: 'http://localhost:3000' };
 
     chrome.storage.sync.get(defaults, (items) => {
-      console.log(items);
       apiKey.val(items.api_key);
       apiLocation.val(items.api_location);
     });

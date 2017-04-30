@@ -1,6 +1,6 @@
 Archivist.popup = {};
 
-$(window).ready(() => {
+$(document).ready(() => {
   const saveBtn = $('#save-page-btn');
   const statusMessage = $('#status-message');
 
@@ -28,30 +28,26 @@ $(window).ready(() => {
     statusMessage.children('.content').text(newMsg);
   };
 
+  function removeLocalTabData() {
+    chrome.storage.local.remove(Archivist.urlHash.toString(), () => {
+      if (chrome.runtime.lastError != null) {
+        // Handle tab data removal failure
+      }
+    });
+  }
+
   /* region Post */
   function handlePostSuccess(data, status) {
     if (status === 'success') {
       Archivist.popup.setStatusMessage('Saved to Archivist', 'slide-out', 3000);
       saveBtn.val('Saved');
+
+      removeLocalTabData();
     }
   }
 
-  function getFormData() {
-    const formElements = $('.metadata_item input');
-
-    const formData = {};
-    // create object with name, type, value, group=generic
-
-    formElements.each((element) => {
-      const curElement = formElements[element];
-      formData[curElement.getAttribute('name')] = curElement.value;
-    });
-
-    return formData;
-  }
-
   function postDataToApi(blob) {
-    const formData = getFormData();
+    const formData = Archivist.form.getFormData();
 
     // loop through each metadataField, add the value from form data to expected API format
     Archivist.metadataFields.forEach((field) => {
@@ -120,7 +116,6 @@ $(window).ready(() => {
     }
 
     if (request.processError) {
-      console.log(request);
       Archivist.popup.setStatusMessage('Error');
     }
   });
@@ -131,9 +126,9 @@ $(window).ready(() => {
     $(`#section-${sectionName}`).toggle();
   }
 
-  function applyCustomScrapedData(scrapeData) {
-    if (scrapeData != null) {
-      Object.keys(scrapeData.fields).forEach((popupFieldId) => {
+  Archivist.popup.fillFormWithObject = (formData) => {
+    if (formData !== undefined) {
+      Object.keys(formData.fields).forEach((popupFieldId) => {
         const group = popupFieldId.split('_')[0];
         const groupFields = $(`#section-${group}`);
         if (!groupFields.is(':visible')) {
@@ -141,11 +136,11 @@ $(window).ready(() => {
           $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
         }
 
-        const curFieldValue = scrapeData.fields[popupFieldId];
+        const curFieldValue = formData.fields[popupFieldId];
         $(`#${popupFieldId}`).val(curFieldValue);
       });
     }
-  }
+  };
 
   // Sets some default fields (title, date added, url)
   function setDefaultFields(curTab) {
@@ -156,27 +151,25 @@ $(window).ready(() => {
     $('#website_url').val(curTab.url).prop('disabled', true);
   }
 
-  // Sends message to pageReader.js to scrape custom fields for site
-  // Result is sent to applyCustomScrapedData
-  function initScrape(curTab) {
-   // const config = Archivist.getScrapperConfig(curTab.url);
-    chrome.tabs.sendMessage(curTab.id, { action: 'scrape_fields' }, applyCustomScrapedData);
-  }
-
-  // Adds the given elements to the beginning of the form
-  function prependElementsToForm(elements) {
-    const form = $('#metadata-form');
-
-    elements.forEach((element) => {
-      form.prepend(element);
+  function checkLocalData() {
+    chrome.storage.local.get(null, (savedItems) => {
+      if (savedItems[Archivist.urlHash] != null) {
+        Archivist.form.tabFormValues[Archivist.urlHash] = savedItems[Archivist.urlHash];
+        Archivist.popup.fillFormWithObject(savedItems[Archivist.urlHash]);
+      }
     });
   }
 
-  // Adds the given element to the end of the form
-  function prependElementToForm(element) {
-    const form = $('#metadata-form');
+  function handleScrapeData(scrapeData) {
+    Archivist.popup.fillFormWithObject(scrapeData);
+    checkLocalData();
+  }
 
-    form.prepend(element);
+  // Sends message to pageReader.js to scrape custom fields for site
+  // Result is sent to Archivist.popup.fillFormWithObject
+  function initScrape() {
+   // const config = Archivist.getScrapperConfig(curTab.url);
+    chrome.tabs.sendMessage(Archivist.curTab.id, { action: 'scrape_fields' }, handleScrapeData);
   }
 
   function generateFormHtml(groupData) {
@@ -208,15 +201,12 @@ $(window).ready(() => {
       groupCheckbox.appendTo(checkboxDiv);
     });
 
-    prependElementsToForm(sections);
-    prependElementToForm(checkboxDiv[0].childNodes);
+    Archivist.form.prependElements(sections);
+    Archivist.form.prependElement(checkboxDiv[0].childNodes);
 
-    chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-      const curTab = tabs[0];
-
-      setDefaultFields(curTab);
-      initScrape(curTab);
-    });
+    setDefaultFields(Archivist.curTab);
+    initScrape();
+    Archivist.form.setInputEvents();
   }
 
   function extractMetadataFields(groupData) {
@@ -236,6 +226,11 @@ $(window).ready(() => {
   /* region Init */
   saveBtn.click(click);
 
-  Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
+  chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+    Archivist.curTab = tabs[0];
+    Archivist.urlHash = Archivist.genHashCode(Archivist.curTab.url);
+
+    Archivist.api.getMetadataFieldGroups(handleMetadataGroupSuccess);
+  });
   /* endregion Init */
 });
