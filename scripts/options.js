@@ -18,13 +18,39 @@ $(document).ready(() => {
   function saveOptions() {
     const saveValues = getFormData();
 
-    chrome.storage.sync.set(saveValues, () => {
-      // Update status to let user know options were saved.
-      const status = $('#status');
+    const status = $('#status');
+    $.ajax({
+      url: `${saveValues.api_location}/public/groups`,
+      type: 'GET',
+      contentType: 'application/json',
+      dataType: 'json'
+    }).then(function(result) {
+      status.css('color', 'black');
+      chrome.storage.sync.set(saveValues, () => {
+        // Update status to let user know options were saved.
+        status.text('Options Saved');
+        status.fadeIn();
+        setTimeout(() => {
+          status.fadeOut();
+        }, 2000);
+      });
+    }, function(error) {
+      status.css('color', 'red');
+      switch (error.status) {
+        case 0:
+        case 404:
+          status.text('Invalid API Location');
+          break;
+        case 403:
+          status.text('Invalid API Key or Location');
+          break;
+        default:
+          status.text('Unkown error');
+      }
       status.fadeIn();
       setTimeout(() => {
         status.fadeOut();
-      }, 3000);
+      }, 2000);
     });
 
     return false;
