@@ -23,8 +23,8 @@ $(document).ready(() => {
       url: `${saveValues.api_location}/public/groups`,
       type: 'GET',
       contentType: 'application/json',
-      dataType: 'json'
-    }).then(function(result) {
+      dataType: 'json',
+    }).then(() => {
       status.css('color', 'black');
       chrome.storage.sync.set(saveValues, () => {
         // Update status to let user know options were saved.
@@ -34,7 +34,7 @@ $(document).ready(() => {
           status.fadeOut();
         }, 2000);
       });
-    }, function(error) {
+    }, (error) => {
       status.css('color', 'red');
       switch (error.status) {
         case 0:
