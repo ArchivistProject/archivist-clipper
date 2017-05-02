@@ -177,14 +177,13 @@ $(document).ready(() => {
     const defaultGroups = ['Generic', 'Website'];
     groupData.forEach((group) => {
       // Add Section
-      let isDefault = defaultGroups.includes(group.name);
+      const isDefault = defaultGroups.includes(group.name);
       const sectionDiv = $(`<div id="section-${group.name.toLowerCase()}">
                               <h1>
                                 <input type="checkbox" data-section-name="${group.name.toLowerCase()}" ${isDefault ? 'style="display:none;"' : ''}/>
                                 ${group.name}
                               </h1>
                             </div>`);
-      console.log(sectionDiv.children('input'));
       sectionDiv.find('input').click(handleGroupClick);
 
       const fieldsContainer = $(`<div id="fields-${group.name.toLowerCase()}"></div>`);
