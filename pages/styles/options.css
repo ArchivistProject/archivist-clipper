@@ -34,7 +34,11 @@ button#save {
     display: block;
 }
 
-#status{
+#status-container {
+  height: 14px;
+}
+
+#status {
     display: none;
     width: 100%;
     height: auto;
