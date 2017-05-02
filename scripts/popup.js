@@ -123,14 +123,14 @@ $(document).ready(() => {
   // Toggles section on click of metadata group checkbox
   function handleGroupClick() {
     const sectionName = $(this).data('section-name');
-    $(`#section-${sectionName}`).toggle();
+    $(`#fields-${sectionName}`).toggle();
   }
 
   Archivist.popup.fillFormWithObject = (formData) => {
     if (formData !== undefined) {
       Object.keys(formData.fields).forEach((popupFieldId) => {
         const group = popupFieldId.split('_')[0];
-        const groupFields = $(`#section-${group}`);
+        const groupFields = $(`#fields-${group}`);
         if (!groupFields.is(':visible')) {
           groupFields.toggle();
           $(`input[data-section-name="${group}"]`).prop('checked', 'checked');
@@ -174,35 +174,32 @@ $(document).ready(() => {
 
   function generateFormHtml(groupData) {
     const sections = [];
-    const checkboxDiv = $('<div class="metadata-checkboxes"><h1>Metadata Groups</h1></div>');
     const defaultGroups = ['Generic', 'Website'];
     groupData.forEach((group) => {
       // Add Section
-      const sectionDiv = $(`<div id="section-${group.name.toLowerCase()}"><h1>${group.name}</h1></div>`);
-      const metadataInputs = Archivist.html.generateMetadataInputs(group.fields, group.name);
-      metadataInputs.forEach((htmlElement) => {
-        $(htmlElement).appendTo(sectionDiv);
-      });
-      sections.unshift(sectionDiv);
+      const isDefault = defaultGroups.includes(group.name);
+      const sectionDiv = $(`<div id="section-${group.name.toLowerCase()}">
+                              <h1>
+                                <input type="checkbox" data-section-name="${group.name.toLowerCase()}" ${isDefault ? 'style="display:none;"' : ''}/>
+                                ${group.name}
+                              </h1>
+                            </div>`);
+      sectionDiv.find('input').click(handleGroupClick);
 
-      // Add checkbox
-      let disabledText = '';
-      if (defaultGroups.includes(group.name)) {
-        disabledText = 'disabled="disabled" checked="checked"';
-      } else {
-        sectionDiv.toggle();
+      const fieldsContainer = $(`<div id="fields-${group.name.toLowerCase()}"></div>`);
+      Archivist.html.generateMetadataInputs(group.fields, group.name).forEach((htmlElement) => {
+        $(htmlElement).appendTo(fieldsContainer);
+      });
+
+      if (!defaultGroups.includes(group.name)) {
+        fieldsContainer.toggle();
       }
 
-      const groupCheckbox = $(`<label>
-                                <input ${disabledText} type="checkbox"
-                                data-section-name="${group.name.toLowerCase()}" /> ${group.name}
-                              </label>`);
-      groupCheckbox.children('input').click(handleGroupClick);
-      groupCheckbox.appendTo(checkboxDiv);
+      fieldsContainer.appendTo(sectionDiv);
+      sections.unshift(sectionDiv);
     });
 
     Archivist.form.prependElements(sections);
-    Archivist.form.prependElement(checkboxDiv[0].childNodes);
 
     setDefaultFields(Archivist.curTab);
     initScrape();
