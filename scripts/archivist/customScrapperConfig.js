@@ -57,7 +57,6 @@ Archivist.customScrappingConfig = {
       dataFormatFunc: v => Archivist.getOpenGraphContent(v)[0],
     },
     // TODO: Scrape og:url b/c it'll be cannonical? IE without the tracking query params
-    // TODO: og:site_name and and article:section for the webpage tag?
     generic_date_published: {
       selector: "meta[property='article:published_time']",
       dataFormatFunc: (v) => {
@@ -66,6 +65,10 @@ Archivist.customScrappingConfig = {
         //console.log(d[0], new Date(d[0]));
         return Archivist.getInputDateFormat(new Date(d[0]));
       },
+    },
+    website_name: {
+      selector: "meta[property='og:site_name']",
+      dataFormatFunc: v => Archivist.getOpenGraphContent(v)[0],
     },
     tags: {
       selector: "meta[property='article:tag'], meta[property='article:section']",
