@@ -68,7 +68,7 @@ Archivist.customScrappingConfig = {
       },
     },
     tags: {
-      selector: "meta[property='article:tag']",
+      selector: "meta[property='article:tag'], meta[property='article:section']",
       dataFormatFunc: (tags) => {
         return Archivist.getOpenGraphContent(tags).map((_,t) => {
           if (t.includes(' ')) {
