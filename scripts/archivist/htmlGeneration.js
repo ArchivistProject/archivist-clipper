@@ -11,6 +11,8 @@ Archivist.html.util.getInputType = (apiType) => {
       return 'date';
     case 'url':
       return 'url';
+    case 'numeric':
+      return 'number';
     default:
       return null;
   }
@@ -23,14 +25,42 @@ Archivist.html.generateMetadataLabel = metadataField =>
       htmlFor: metadataField.id,
     });
 
-// Generates html for metadata field's input field
-Archivist.html.generateMetadataInput = (metadataField, groupName) => $('<input />',
-  {
-    // ID currently has spaces in it, which is no good for html ids
-    id: `${groupName.toLowerCase()}_${metadataField.id.replace(/ /i, '_')}`,
-    name: metadataField.name,
-    type: Archivist.html.util.getInputType(metadataField.type),
+Archivist.html.renderSelectOption = (optionArray, metadataField, groupName) => {
+  const select = $('<select></select>',
+    {
+      id: `${groupName.toLowerCase()}_${metadataField.id.replace(/ /i, '_')}`,
+    });
+
+  optionArray.forEach((option) => {
+    select.prepend(
+      $(`<option>${option.label}</option>`,
+        {
+          value: option.value,
+        }));
   });
+
+  return (select);
+}
+
+// Generates html for metadata field's input field
+Archivist.html.generateMetadataInput = (metadataField, groupName) => {
+  if (metadataField.type === 'true/false') {
+    const optionArray = [
+      { label: 'false', value: 0 },
+      { label: 'true', value: 1 },
+    ];
+
+    return Archivist.html.renderSelectOption(optionArray, metadataField, groupName);
+  }
+
+  return $('<input />',
+    {
+      // ID currently has spaces in it, which is no good for html ids
+      id: `${groupName.toLowerCase()}_${metadataField.id.replace(/ /i, '_')}`,
+      name: metadataField.name,
+      type: Archivist.html.util.getInputType(metadataField.type),
+    });
+}
 
 // Generates html for metadata field and returns as array
 Archivist.html.generateMetadataInputs = (metadataFields, groupName) => {
