@@ -40,7 +40,7 @@ Archivist.html.renderSelectOption = (optionArray, metadataField, groupName) => {
   });
 
   return (select);
-}
+};
 
 // Generates html for metadata field's input field
 Archivist.html.generateMetadataInput = (metadataField, groupName) => {
@@ -60,7 +60,7 @@ Archivist.html.generateMetadataInput = (metadataField, groupName) => {
       name: metadataField.name,
       type: Archivist.html.util.getInputType(metadataField.type),
     });
-}
+};
 
 // Generates html for metadata field and returns as array
 Archivist.html.generateMetadataInputs = (metadataFields, groupName) => {
