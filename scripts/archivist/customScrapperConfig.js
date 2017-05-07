@@ -5,7 +5,7 @@ Archivist.customScrappingConfig = {
     },
     generic_date_published: {
       selector: '.byline time', // Given: 2/26/2017, 7:00 PM
-      dataFormatFunc: origVal => Archivist.getInputDateFormat(new Date(origVal)),
+      dataFormatFunc: origVal => Archivist.getInputDateFormat(new Date(origVal[0])),
     },
   },
   Idea_Library_Drexel: {
@@ -22,8 +22,8 @@ Archivist.customScrappingConfig = {
     },
     description: {
       selector: '.abstract:not(.abstractHighlights)',
-      dataFormatFunc: (htmlText) => {
-        const block = Archivist.toHtmlObect(htmlText);
+      dataFormatFunc: (html) => {
+        const block = Archivist.toHtmlObect(html[0].html());
         const innerP = block.find('p');
         const abstract = innerP.length >= 1 ? innerP.text() : block.text();
         return `# Abstract\n ${abstract}`;
@@ -37,12 +37,12 @@ Archivist.customScrappingConfig = {
     },
     journal_issue: {
       selector: '.volIssue',
-      dataFormatFunc: origValue => origValue.split(',')[1],
+      dataFormatFunc: origValue => origValue[0].html().split(',')[1],
     },
     journal_pages: {
       selector: '.volIssue',
       dataFormatFunc: (origValue) => {
-        const pages = origValue.split(',')[2];
+        const pages = origValue[0].html().split(',')[2];
         return pages;
       },
     },
