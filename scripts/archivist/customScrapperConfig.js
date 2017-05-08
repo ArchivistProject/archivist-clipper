@@ -63,8 +63,9 @@ Archivist.customScrappingConfig = {
         const d = Archivist.getOpenGraphContent(v);
         if (d.length === 1) {
           return Archivist.getInputDateFormat(new Date(d[0]));
+        } else {
+          return undefined;
         }
-        return;
       },
     },
     website_name: {
