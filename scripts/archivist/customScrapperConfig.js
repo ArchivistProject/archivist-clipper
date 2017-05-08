@@ -60,9 +60,10 @@ Archivist.customScrappingConfig = {
     generic_date_published: {
       selector: 'meta[property="article:published_time"]',
       dataFormatFunc: (v) => {
-        const d = Archivist.getOpenGraphContent(v);
-        if (d.length === 0) { return; }
-        return Archivist.getInputDateFormat(new Date(d[0]));
+        let d = Archivist.getOpenGraphContent(v);
+        if (d.length === 1) {
+          return Archivist.getInputDateFormat(new Date(d[0]));
+        }
       },
     },
     website_name: {
@@ -71,14 +72,13 @@ Archivist.customScrappingConfig = {
     },
     tags: {
       selector: 'meta[property="article:tag"], meta[property="article:section"]',
-      dataFormatFunc: (tags) => (
+      dataFormatFunc: (tags) =>
         Archivist.getOpenGraphContent(tags).map((_, t) => {
           if (t.includes(' ')) {
             return `"${t}"`;
           }
           return t;
-        }).toArray().join(' ')
-      ),
+        }).toArray().join(' '),
     },
     description: {
       selector: 'meta[property="og:description"]',
