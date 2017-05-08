@@ -59,11 +59,11 @@ Archivist.customScrappingConfig = {
     // TODO: Scrape og:url b/c it'll be cannonical? IE without the tracking query params
     generic_date_published: {
       selector: 'meta[property="article:published_time"]',
-      dataFormatFunc: (v) => {
+      dataFormatFunc: (v) => ({
         const d = Archivist.getOpenGraphContent(v);
         if (d.length === 0) { return; }
         return Archivist.getInputDateFormat(new Date(d[0]));
-      },
+      }),
     },
     website_name: {
       selector: 'meta[property="og:site_name"]',
@@ -71,14 +71,14 @@ Archivist.customScrappingConfig = {
     },
     tags: {
       selector: 'meta[property="article:tag"], meta[property="article:section"]',
-      dataFormatFunc: (tags) => {
-        return Archivist.getOpenGraphContent(tags).map((_, t) => {
+      dataFormatFunc: (tags) => ({
+        Archivist.getOpenGraphContent(tags).map((_, t) => {
           if (t.includes(' ')) {
-            return '"' + t + '"';
+            return `"${t}"`;
           }
           return t;
         }).toArray().join(' ');
-      },
+      }),
     },
     description: {
       selector: 'meta[property="og:description"]',
