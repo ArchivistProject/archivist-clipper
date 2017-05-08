@@ -7,7 +7,7 @@ function scrapeFields(returnFunc) {
   Object.keys(scrapeConfig).forEach((fieldId) => {
     const fieldConfig = scrapeConfig[fieldId];
     let fieldValue = $(fieldConfig.selector);
-    
+
     if (fieldConfig.dataFormatFunc !== undefined) {
       fieldValue = fieldConfig.dataFormatFunc(fieldValue);
     } else {

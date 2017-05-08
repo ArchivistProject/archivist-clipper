@@ -3,7 +3,7 @@ const Archivist = {
   metadataFields: [],
 
   getOpenGraphContent: (ogs) => {
-    return ogs.map((_,og) => og['content']);
+    return ogs.map((_, og) => og.content);
   },
 
   getInputDateFormat: (date) => {
