@@ -2,7 +2,7 @@ const Archivist = {
   curTabID: null,
   metadataFields: [],
 
-  getOpenGraphContent: (ogs) => ogs.map((_, og) => og.content),
+  getOpenGraphContent: ogs => ogs.map((_, og) => og.content),
 
   getInputDateFormat: (date) => {
     const paddedMonth = (`0${date.getMonth() + 1}`).slice(-2);
