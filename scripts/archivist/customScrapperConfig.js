@@ -61,9 +61,7 @@ Archivist.customScrappingConfig = {
       selector: 'meta[property="article:published_time"]',
       dataFormatFunc: (v) => {
         const d = Archivist.getOpenGraphContent(v);
-        if (d.length === 1) {
-          return Archivist.getInputDateFormat(new Date(d[0]));
-        }
+        return d.length === 1 ? Archivist.getInputDateFormat(new Date(d[0])) : undefined;
       },
     },
     website_name: {
