@@ -71,14 +71,14 @@ Archivist.customScrappingConfig = {
     },
     tags: {
       selector: 'meta[property="article:tag"], meta[property="article:section"]',
-      dataFormatFunc: (tags) => ({
+      dataFormatFunc: (tags) => (
         Archivist.getOpenGraphContent(tags).map((_, t) => {
           if (t.includes(' ')) {
             return `"${t}"`;
           }
           return t;
-        }).toArray().join(' ');
-      }),
+        }).toArray().join(' ')
+      ),
     },
     description: {
       selector: 'meta[property="og:description"]',
