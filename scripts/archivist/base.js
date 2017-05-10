@@ -13,12 +13,9 @@ const Archivist = {
 
 Archivist.stripDoubleQuotes = function (string) {
   const s = $.trim(string);
-  const hasBegin = s.startsWith('"');
-  const hasEnd = s.endsWith('"');
-  return s.substring(
-    hasBegin ? 1 : 0,
-    hasEnd ? s.length - 1 : s.length
-  );
+  const begin = s.startsWith('"') ? 1 : 0;
+  const end = s.endsWith('"') ? s.length - 1 : s.length;
+  return s.substring(begin, end);
 };
 
 Archivist.genHashCode = function (string) {
