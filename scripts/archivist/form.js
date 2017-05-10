@@ -20,7 +20,7 @@ function saveField(element) {
 }
 
 Archivist.form.setInputEvents = () => {
-  $('input[type!="checkbox"], textarea').on(
+  $('input[type!="checkbox"], textarea, select').on(
     'keyup, change', (event) => {
       const changedElement = event.target;
       saveField(changedElement);

@@ -17,25 +17,25 @@ body {
     background: white;
 }
 
-body *{
+body * {
     box-sizing: border-box;
 }
 
-.header{
+.header {
     text-align: center;
     font-size: 16px;
     color: #9B59B6;
     margin-bottom: 10px;
 }
 
-h1{
+h1 {
     font-size: 16px;
     line-height: 20px;
     margin: 5px 0;
     display: inline-block;
 }
 
-label, input{
+label, input, select {
     width: 50%;
     display: inline-block;
     vertical-align: top;
@@ -47,7 +47,7 @@ input[type="checkbox"] {
     width: initial;
 }
 
-input[type="button"]{
+input[type="button"] {
     margin: 10px auto 5px;
     padding: 8px 14px;
     display: block;
