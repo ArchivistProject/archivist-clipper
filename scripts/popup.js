@@ -65,7 +65,7 @@ $(document).ready(() => {
       const documentData = {
         document: {
           file: base64data,
-          tags: tagsData === '' ? [] : tagsData.split(' '),
+          tags: tagsData === '' ? [] : tagsData.match(/(?:[^\s"]+|"[^"]*")+/g).map(t => Archivist.stripDoubleQuotes(t)),
           description: descriptionData,
           metadata_fields: Archivist.metadataFields,
         },
