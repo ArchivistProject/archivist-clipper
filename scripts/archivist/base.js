@@ -11,6 +11,16 @@ const Archivist = {
   toHtmlObect: text => $(`<div>${text}</div>`),
 };
 
+Archivist.stripDoubleQuotes = function (string) {
+  const s = $.trim(string);
+  const hasBegin = s.startsWith('"');
+  const hasEnd = s.endsWith('"');
+  return s.substring(
+    hasBegin ? 1 : 0,
+    hasEnd ? s.length - 2 : s.length - 1
+  )
+};
+
 Archivist.genHashCode = function (string) {
   let hash = 0;
   let i;
