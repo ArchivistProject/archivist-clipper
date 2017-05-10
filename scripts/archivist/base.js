@@ -17,8 +17,8 @@ Archivist.stripDoubleQuotes = function (string) {
   const hasEnd = s.endsWith('"');
   return s.substring(
     hasBegin ? 1 : 0,
-    hasEnd ? s.length - 2 : s.length - 1
-  )
+    hasEnd ? s.length - 1 : s.length
+  );
 };
 
 Archivist.genHashCode = function (string) {
