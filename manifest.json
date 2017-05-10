@@ -1,7 +1,7 @@
 {
   "name": "Archivist Clipper",
   "description": "The extension portion of Archivist, used to upload new html files",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "permissions": [
     "tabs", "http://*/*", "https://*/*",
     "downloads","storage"
